@@ -1,4 +1,0 @@
-/Users/habibabassem/Desktop/AssemblyPrj1/Assembly-Proj-1/rv32i_sim_skeleton_code.cpp:59:3: error: use of undeclared identifier 'emitError'
-                emitError("Cannot access input file\n");
-                ^
-1 error generated.
