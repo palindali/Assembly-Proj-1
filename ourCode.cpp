@@ -32,7 +32,7 @@ void printPrefix(unsigned int instA, unsigned int instCode);
 void emitError(char *s);
 void Rtype (instWord& inst);
 void Itype(instWord& inst);
-
+void Stype (instWord& inst);
 
 int main()
 {
@@ -87,100 +87,148 @@ void instAssembleExec(instWord&inst)
             break;
         case 0x3: Itype(inst);
             break;
+        case 0x67: Itype (inst);
+            break;
+        case 0x23: Stype(inst);
+            break;
     }
     
+}
+
+//function to execute S type
+void Stype (instWord& inst)
+{
+    switch (inst.funct3)
+    {
+            //sb
+        case 0:
+        {
+            int t = inst.rs2 & 0x000000ff;
+            memory[inst.rs1 + inst.S_imm] = t;
+        }
+            break;
+            //sh
+        case 1:
+        {
+            int t = inst.rs2 & 0x0000ffff;
+            memory[inst.rs1 + inst.S_imm] = t;
+        }
+            break;
+            //sw
+        case 2:
+        {
+            memory[inst.rs1 + inst.S_imm] = inst.rs2;
+        }
+            break;
+        default:
+            cout << "\tUnknown S Instruction \n";
+    }
 }
 
 //Function to execute I instructions
 void Itype(instWord& inst)
 {
-    if (inst.opcode==0x13)
-        switch (inst.funct3)
+    switch (inst.opcode)
     {
-            //addi
-        case 0: regs[inst.rd] = regs[inst.rs1] + (inst.I_imm);
-            break;
-            //slli
-        case 1:
+        case 0x13:
         {
-            int lo = inst.I_imm & (0b000000011111); //lower significant 8 bits of i immediate
-            regs[inst.rd] = regs[inst.rs1] << lo;
+            switch (inst.funct3)
+            {
+                    //addi
+                case 0: regs[inst.rd] = regs[inst.rs1] + (inst.I_imm);
+                    break;
+                    //slli
+                case 1:
+                {
+                    int lo = inst.I_imm & (0b000000011111); //lower significant 8 bits of i immediate
+                    regs[inst.rd] = regs[inst.rs1] << lo;
+                }
+                    break;
+                    //slti
+                case 2: regs[inst.rd] = (regs[inst.rs1] < (inst.I_imm));
+                    break;
+                    //sltiu
+                case 3: regs[inst.rd] = ( (unsigned int) regs[inst.rs1] < ((unsigned int)inst.I_imm) );
+                    break;
+                    //xori
+                case 4: regs[inst.rd] = regs[inst.rs1] ^ (inst.I_imm);
+                    break;
+                    //sra & srl
+                case 5:
+                {
+                    int hi = inst.I_imm & (0b111111100000); //most signficant 7 bits of i immediate
+                    int lo = inst.I_imm & (0b000000011111); //lower significant 8 bits of i immediate
+                    if (hi==0) //srli
+                        regs[inst.rd] = (unsigned int) regs[inst.rs1] >> lo;
+                    else //srai
+                        regs[inst.rd] = regs[inst.rs1] >> lo;
+                }
+                    break;
+                    //ori
+                case 6:  regs[inst.rd] = regs[inst.rs1] | (inst.I_imm);
+                    break;
+                    //andi
+                case 7: regs[inst.rd] = regs[inst.rs1] & (inst.I_imm);
+                    break;
+                default:
+                    cout << "\tUnknown I Instruction \n";
+            }
         }
             break;
-            //slti
-        case 2: regs[inst.rd] = (regs[inst.rs1] < (inst.I_imm));
-            break;
-            //sltiu
-        case 3: regs[inst.rd] = ( (unsigned int) regs[inst.rs1] < ((unsigned int)inst.I_imm) );
-            break;
-            //xori
-        case 4: regs[inst.rd] = regs[inst.rs1] ^ (inst.I_imm);
-            break;
-            //sra & srl
-        case 5:
+        case 0x3:
         {
-            int hi = inst.I_imm & (0b111111100000); //most signficant 7 bits of i immediate
-            int lo = inst.I_imm & (0b000000011111); //lower significant 8 bits of i immediate
-            if (hi==0) //srli
-                regs[inst.rd] = (unsigned int) regs[inst.rs1] >> lo;
-            else //srai
-                regs[inst.rd] = regs[inst.rs1] >> lo;
+            switch (inst.funct3)
+            {
+                    //lb
+                case 0:
+                    regs[inst.rd] = memory[regs[inst.rs1] + inst.I_imm];
+                    break;
+                    //lh
+                case 1:
+                {
+                    int x = memory[regs[inst.rs1] + inst.I_imm] << 8;
+                    int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1];
+                    
+                    regs[inst.rd] = x + y;
+                }
+                    break;
+                    //lw
+                case 2:
+                {
+                    int x = memory[regs[inst.rs1] + inst.I_imm] << 24;
+                    int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1] << 16;
+                    int z = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+2] << 8;
+                    int t = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+3];
+                    regs[inst.rd] = x + y + z + t;
+                }
+                    break;
+                    //lbu
+                case 4:
+                    regs[inst.rd] = (unsigned int) memory[regs[inst.rs1] + inst.I_imm];
+                    break;
+                    //lhu
+                case 5:
+                {
+                    int x = (unsigned int) memory[regs[inst.rs1] + inst.I_imm] << 8;
+                    int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1];
+                    
+                    regs[inst.rd] = x + y;
+                }
+                    break;
+                default:
+                    cout << "\tUnknown I Instruction \n";
+            }
         }
             break;
-            //ori
-        case 6:  regs[inst.rd] = regs[inst.rs1] | (inst.I_imm);
-            break;
-            //andi
-        case 7: regs[inst.rd] = regs[inst.rs1] & (inst.I_imm);
-            break;
-        default:
-            cout << "\tUnknown I Instruction \n";
-    }
-    else
-    {
-        switch (inst.funct3)
+        case 0x67:
         {
-                //lb
-            case 0:
-                regs[inst.rd] = memory[regs[inst.rs1] + inst.I_imm];
-                break;
-                //lh
-            case 1:
-            {
-                int x = memory[regs[inst.rs1] + inst.I_imm] << 8;
-                int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1];
-                
-                regs[inst.rd] = x + y;
-            }
-                break;
-                //lw
-            case 2:
-            {
-                int x = memory[regs[inst.rs1] + inst.I_imm] << 24;
-                int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1] << 16;
-                int z = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+2] << 8;
-                int t = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+3];
-                regs[inst.rd] = x + y + z + t;
-            }
-                break;
-                //lbu
-            case 4:
-                regs[inst.rd] = (unsigned int) memory[regs[inst.rs1] + inst.I_imm];
-                break;
-                //lhu
-            case 5:
-            {
-                int x = (unsigned int) memory[regs[inst.rs1] + inst.I_imm] << 8;
-                int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1];
-                
-                regs[inst.rd] = x + y;
-            }
-                break;
-            default:
-                cout << "\tUnknown I Instruction \n";
+            inst.rd = pc + 4;
+            pc = inst.rs1 + inst.I_imm;
+            pc = pc & 0xfffffffe;
         }
     }
 }
+
 
 //function to execute R instructions
 void Rtype (instWord& inst)
@@ -225,4 +273,3 @@ void Rtype (instWord& inst)
             cout << "\tUnknown R Instruction \n";
     }
 }
-
