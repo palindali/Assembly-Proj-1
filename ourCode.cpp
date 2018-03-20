@@ -27,13 +27,16 @@ unsigned int pc = 0x0; //program counter
 char memory[8*1024];    // 8KB of memory located at address 0
 
 //Function prototype
-void instAssembleExec(instWord& inst);
+bool instAssembleExec(instWord& inst);
 void printPrefix(unsigned int instA, unsigned int instCode);
 void emitError(char *s);
 void Rtype (instWord& inst);
 void Itype(instWord& inst);
 void Stype (instWord& inst);
 void SBtype (instWord& inst);
+void UJtype (instWord& inst);
+void Utype (instWord& inst);
+bool ecall (instWord& inst);
 
 int main()
 {
@@ -50,7 +53,13 @@ int main()
             getline (inFile, W.instText);
             
             //parse(&W);        //parse instText into its instruction format fields
-            //instAssembleExec(&W);        //Generate instruction machine code and execute instruction
+            //Generate instruction machine code and execute instruction
+            
+            if (instAssembleExec(W)) //execute instructions. return 0 if code for termination and ecall are detected
+            {
+                return 0;
+            }
+            
             //printPrefix(pc, W.instMachineCode);
             //save machine code to an output file
             pc += 4;
@@ -77,23 +86,75 @@ void printPrefix(unsigned int instA, unsigned int instCode)
     cout << "0x" << hex << std::setfill('0') << std::setw(8) << instA << "\t0x" << hex << std::setw(8) << instCode;
 }
 
-void instAssembleExec(instWord&inst)
+
+//returns true only if x10=10/ code for program termination
+bool instAssembleExec(instWord&inst)
 {
     //execute instruction
     switch(inst.opcode)
     {
-        case 0x33: Rtype(inst);
+        case 0x33:
+        {
+            Rtype(inst);
+            return false;
+        }
             break;
-        case 0x13: Itype(inst);
+        case 0x13:
+        {
+            Itype(inst);
+            return false;
+        }
             break;
-        case 0x3: Itype(inst);
+        case 0x3:
+        {
+            Itype(inst);
+            return false;
+        }
             break;
-        case 0x67: Itype (inst);
+        case 0x67:
+        {
+            Itype (inst);
+            return false;
+        }
             break;
-        case 0x23: Stype(inst);
+        case 0x23:
+        {
+            Stype(inst);
+            return false;
+        }
             break;
-        case 0x63: SBtype(inst);
+        case 0x63:
+        {
+            SBtype(inst);
+            return false;
+        }
             break;
+        case 0x6F:
+        {
+            UJtype(inst);
+            return false;
+        }
+            break;
+        case 0x37:
+        {
+            Utype(inst);
+            return false;
+        }
+            break;
+        case 0x17:
+        {
+            Utype(inst);
+            return false;
+        }
+            break;
+        case 0: return ecall(inst);
+            break;
+        default:
+        {
+            cout<<"unsupported instruction\n";
+            return false;
+        }
+            
     }
     
 }
@@ -325,6 +386,64 @@ void SBtype (instWord& inst)
                 pc = pc + inst.B_imm;
         }
             break;
+        default:
+            cout << "\tUnknown R Instruction \n";
     }
 }
 
+//function to execute UJ instructions
+void UJtype (instWord& inst)
+{
+    inst.rd = pc + 4;
+    pc = pc + inst.J_imm;
+}
+
+//function to execute U instructions
+void Utype (instWord& inst)
+{
+    switch (inst.opcode)
+    {
+            //lui
+        case 0x37: regs[inst.rd] = inst.U_imm;
+            break;
+            //auipc
+        case 0x17: regs[inst.rd] = pc + inst.U_imm;
+            break;
+    }
+}
+
+
+//function to execute ecall
+//returns true only if x10=10/ code for program termination
+bool ecall (instWord& inst)
+{
+    switch (regs[10])
+    {
+        case 1:
+        {
+            cout << regs[11];
+            return false;
+        }
+            break;
+        case 4:
+        {
+            cout << regs[11];
+            return false;
+        }
+            break;
+        case 5:
+        {
+            cin >> regs[11];
+            return false;
+        }
+            break;
+        case 10:
+            return true;
+            break;
+        default:
+        {
+            cout<< "Unsupported ecall instruction\n";
+            return false;
+        }
+    }
+}
