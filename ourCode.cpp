@@ -33,6 +33,7 @@ void emitError(char *s);
 void Rtype (instWord& inst);
 void Itype(instWord& inst);
 void Stype (instWord& inst);
+void SBtype (instWord& inst);
 
 int main()
 {
@@ -90,6 +91,8 @@ void instAssembleExec(instWord&inst)
         case 0x67: Itype (inst);
             break;
         case 0x23: Stype(inst);
+            break;
+        case 0x63: SBtype(inst);
             break;
     }
     
@@ -273,3 +276,55 @@ void Rtype (instWord& inst)
             cout << "\tUnknown R Instruction \n";
     }
 }
+
+
+//function to execute SB instructions
+void SBtype (instWord& inst)
+{
+    switch (inst.funct3)
+    {
+            //beq
+        case 0:
+        {
+            if (regs[inst.rs1] == regs[inst.rs1])
+                pc = pc + inst.B_imm;
+        }
+            break;
+            //bne
+        case 1:
+        {
+            if (regs[inst.rs1] != regs[inst.rs1])
+                pc = pc + inst.B_imm;
+        }
+            break;
+            //blt
+        case 4:
+        {
+            if (regs[inst.rs1] < regs[inst.rs1])
+                pc = pc + inst.B_imm;
+        }
+            break;
+            //bge
+        case 5:
+        {
+            if (regs[inst.rs1] >= regs[inst.rs1])
+                pc = pc + inst.B_imm;
+        }
+            break;
+            //bltu
+        case 6:
+        {
+            if ((unsigned int)regs[inst.rs1] < (unsigned int)regs[inst.rs1])
+                pc = pc + inst.B_imm;
+        }
+            break;
+            //bgeu
+        case 7:
+        {
+            if ((unsigned int)regs[inst.rs1] >= (unsigned int)regs[inst.rs1])
+                pc = pc + inst.B_imm;
+        }
+            break;
+    }
+}
+
