@@ -37,6 +37,7 @@ void SBtype (instWord& inst);
 void UJtype (instWord& inst);
 void Utype (instWord& inst);
 bool ecall (instWord& inst);
+void parse (instWord& inst);
 
 int main()
 {
@@ -52,7 +53,7 @@ int main()
         {
             getline (inFile, W.instText);
             
-            //parse(&W);        //parse instText into its instruction format fields
+            parse(W);        //parse instText into its instruction format fields
             //Generate instruction machine code and execute instruction
             
             if (instAssembleExec(W)) //execute instructions. return 0 if code for termination and ecall are detected
@@ -347,42 +348,42 @@ void SBtype (instWord& inst)
             //beq
         case 0:
         {
-            if (regs[inst.rs1] == regs[inst.rs1])
+            if (regs[inst.rs1] == regs[inst.rs2])
                 pc = pc + inst.B_imm;
         }
             break;
             //bne
         case 1:
         {
-            if (regs[inst.rs1] != regs[inst.rs1])
+            if (regs[inst.rs1] != regs[inst.rs2])
                 pc = pc + inst.B_imm;
         }
             break;
             //blt
         case 4:
         {
-            if (regs[inst.rs1] < regs[inst.rs1])
+            if (regs[inst.rs1] < regs[inst.rs2])
                 pc = pc + inst.B_imm;
         }
             break;
             //bge
         case 5:
         {
-            if (regs[inst.rs1] >= regs[inst.rs1])
+            if (regs[inst.rs1] >= regs[inst.rs2])
                 pc = pc + inst.B_imm;
         }
             break;
             //bltu
         case 6:
         {
-            if ((unsigned int)regs[inst.rs1] < (unsigned int)regs[inst.rs1])
+            if ((unsigned int)regs[inst.rs1] < (unsigned int)regs[inst.rs2])
                 pc = pc + inst.B_imm;
         }
             break;
             //bgeu
         case 7:
         {
-            if ((unsigned int)regs[inst.rs1] >= (unsigned int)regs[inst.rs1])
+            if ((unsigned int)regs[inst.rs1] >= (unsigned int)regs[inst.rs2])
                 pc = pc + inst.B_imm;
         }
             break;
@@ -447,3 +448,167 @@ bool ecall (instWord& inst)
         }
     }
 }
+
+
+
+void parse (instWord& inst)
+{
+    string part=inst.instText.substr(0,inst.instText.at('\t'));
+    //R
+    if (part == "add")
+    {
+        
+    }
+    else if (part == "sub")
+    {
+        
+    }
+    else if (part == "sll")
+    {
+        
+    }
+    else if (part == "srl")
+    {
+        
+    }
+    else if (part == "sra")
+    {
+        
+    }
+    else if (part == "and")
+    {
+        
+    }
+    else if (part == "or")
+    {
+        
+    }
+    else if (part == "xor")
+    {
+        
+    }
+    else if (part == "slt")
+    {
+        
+    }
+    else if (part == "sltu")
+    {
+        
+    }
+    //I
+    else if (part == "addi")
+    {
+        
+    }
+    else if (part == "slli")
+    {
+        
+    }
+    else if (part == "srli")
+    {
+        
+    }
+    else if (part == "srai")
+    {
+        
+    }
+    else if (part == "andi")
+    {
+        
+    }
+    else if (part == "ori")
+    {
+        
+    }
+    else if (part == "xori")
+    {
+        
+    }
+    else if (part == "slti")
+    {
+        
+    }
+    else if (part == "sltiu")
+    {
+        
+    }
+    //U
+    else if (part == "lui")
+    {
+        
+    }
+    else if (part == "auipc")
+    {
+        
+    }
+    //I
+    else if (part == "lb")
+    {
+        
+    }
+    else if (part == "lbu")
+    {
+        
+    }
+    else if (part == "lh")
+    {
+        
+    }
+    else if (part == "lhu")
+    {
+        
+    }
+    else if (part == "lw")
+    {
+        
+    }
+    //S
+    else if (part == "sb")
+    {
+        
+    }
+    else if (part == "sh")
+    {
+        
+    }
+    else if (part == "sw")
+    {
+        
+    }
+    //SB
+    else if (part == "beq")
+    {
+        
+    }
+    else if (part == "bne")
+    {
+        
+    }
+    else if (part == "blt")
+    {
+        
+    }
+    else if (part == "bltu")
+    {
+        
+    }
+    else if (part == "bge")
+    {
+        
+    }
+    else if (part == "bgeu")
+    {
+        
+    }
+    //UJ
+    else if (part == "jal")
+    {
+        
+    }
+    //I
+    else if (part == "jalr")
+    {
+        
+    }
+}
+
