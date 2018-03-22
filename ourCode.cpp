@@ -148,7 +148,9 @@ bool instAssembleExec(instWord&inst)
             return false;
         }
             break;
-        case 0: return ecall(inst);
+            ///////////////////////
+            //////////////////////
+        case 0x73: return ecall(inst);
             break;
         default:
         {
@@ -495,6 +497,7 @@ void parse (instWord& inst)
     {
         
     }
+    
     //I
     else if (part == "addi")
     {
@@ -611,4 +614,3 @@ void parse (instWord& inst)
         
     }
 }
-
