@@ -10,8 +10,8 @@ using namespace std;
 
 struct instWord
 {
-    string instText;
-    unsigned int instMachineCode;
+    string Text;
+    unsigned int MachineCode;
     unsigned int rd, rs1, rs2, funct3, funct7, opcode;
     unsigned int I_imm, S_imm, B_imm, U_imm, J_imm;
 };
@@ -32,11 +32,11 @@ int main()
     ifstream inFile;
     ofstream outFile;
     instWord w;
-    
+
     inFile.open("div.s");
     if(inFile.is_open())
     {
-        inFile >> w.instMachineCode;
+        inFile >> w.MachineCode;
         parse(w);
         mars (w, outFile);
     }
@@ -45,7 +45,7 @@ int main()
 
 void parse (instWord& inst)
 {
-    inst.opcode = inst.instMachineCode & 0x7F;
+    inst.opcode = inst.MachineCode & 0x7F;
     switch (inst.opcode)
     {
             //Rtype
@@ -119,7 +119,7 @@ void parse (instWord& inst)
             // & ecall
         default:
         {
-            
+
         }
     }
 }
@@ -171,7 +171,7 @@ void mars (instWord& inst, ofstream& ofile)
             break;
         default:
         {
-            
+
         }
     }
 }
@@ -302,7 +302,7 @@ void marsI (instWord& inst, ofstream& ofile)
             ////////////need help////////////////////
         case 0x67:
         {
-            
+
             ofile << "addi   $" << inst.rs1 << ",$" << inst.rs1  << "," << inst.I_imm << endl;
             ofile << "jr   $" << inst.rs1 << endl;
         }
@@ -405,4 +405,3 @@ void marsEcall (instWord& inst, ofstream& ofile)
 {
     ofile << "syscall" << endl;
 }
-

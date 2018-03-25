@@ -1,24 +1,16 @@
-/*
- This is just a skeleton. It DOES NOT implement all the requirements.
- It only recognizes the "ADD" and "SUB" instructions and prints
- "Unknown Instruction" for all other instructions.
- 
- References:
- (1) The risc-v ISA Manual ver. 2.1 @ https://riscv.org/specifications/
- (2) https://github.com/michaeljclark/riscv-meta/blob/master/meta/opcodes
- */
-
 #include <iostream>
 #include <fstream>
 #include "stdlib.h"
 #include <iomanip>
 #include <string>
+#include <sstream>
+#include <bitset>
 using namespace std;
 
 struct instWord
 {
-    string instText;
-    unsigned int instMachineCode;
+    string Text;
+    unsigned int MachineCode;
     unsigned int rd, rs1, rs2, funct3, funct7, opcode;
     unsigned int I_imm, S_imm, B_imm, U_imm, J_imm;
 };
@@ -26,12 +18,12 @@ int regs[32]={0}; //register simulation
 unsigned int pc = 0x0; //program counter
 char memory[8*1024];    // 8KB of memory located at address 0
 
-//Function prototype
-bool instAssembleExec(instWord& inst);
-void printPrefix(unsigned int instA, unsigned int instCode);
-void emitError(char *s);
+// Function prototype
+bool instAssembleExec (instWord& inst);
+void printPrefix (unsigned int instA, unsigned int instCode);
+void emitError (char *s);
 void Rtype (instWord& inst);
-void Itype(instWord& inst);
+void Itype (instWord& inst);
 void Stype (instWord& inst);
 void SBtype (instWord& inst);
 void UJtype (instWord& inst);
@@ -44,33 +36,33 @@ int main()
     ifstream inFile;
     ofstream outFile;
     instWord W;
-    
+
     inFile.open("div.s");
     if(inFile.is_open())
     {
         pc = 0x0;
         while(!inFile.eof())
         {
-            getline (inFile, W.instText);
-            
-            parse(W);        //parse instText into its instruction format fields
+            getline (inFile, W.Text);
+
+            parse(W);        //parse Text into its instruction format fields
             //Generate instruction machine code and execute instruction
-            
+
             if (instAssembleExec(W)) //execute instructions. return 0 if code for termination and ecall are detected
             {
                 return 0;
             }
-            
-            //printPrefix(pc, W.instMachineCode);
+
+            //printPrefix(pc, W.MachineCode);
             //save machine code to an output file
             pc += 4;
         }
-        
+
         inFile.close();
-        
+
         // print out the registers values
         for(int i = 0; i < 32; i++)
-            cout << "x" << dec << i << ": \t"<< "0x" << hex << std::setfill('0') << std::setw(8) << regs[i] << "\n";
+            cout << "x" << dec << i << ": \t"<< "0x" << hex << setfill('0') << setw(8) << regs[i] << "\n";
     }
     else
         emitError("Cannot access input file\n");
@@ -84,7 +76,7 @@ void emitError(char *s)
 
 void printPrefix(unsigned int instA, unsigned int instCode)
 {
-    cout << "0x" << hex << std::setfill('0') << std::setw(8) << instA << "\t0x" << hex << std::setw(8) << instCode;
+    cout << "0x" << hex << setfill('0') << setw(8) << instA << "\t0x" << hex << setw(8) << instCode;
 }
 
 
@@ -154,12 +146,12 @@ bool instAssembleExec(instWord&inst)
             break;
         default:
         {
-            cout<<"unsupported instruction\n";
+            cout << "unsupported instruction\n";
             return false;
         }
-            
+
     }
-    
+
 }
 
 //function to execute S type
@@ -255,7 +247,7 @@ void Itype(instWord& inst)
                 {
                     int x = memory[regs[inst.rs1] + inst.I_imm] << 8;
                     int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1];
-                    
+
                     regs[inst.rd] = x + y;
                 }
                     break;
@@ -278,7 +270,7 @@ void Itype(instWord& inst)
                 {
                     int x = (unsigned int) memory[regs[inst.rs1] + inst.I_imm] << 8;
                     int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1];
-                    
+
                     regs[inst.rd] = x + y;
                 }
                     break;
@@ -451,166 +443,365 @@ bool ecall (instWord& inst)
     }
 }
 
+unsigned int getfield(int& after, char beg, char end, string s)
+{
+	int x, i, k;
+	string sub;
 
+	i = s.find(beg, after);
+	k = s.find(end, i);
+	sub = s.substr(i + 1, k - i - 1);
+
+	stringstream stream(sub);
+	stream >> x;
+	after = k+1;
+	return x;
+}
 
 void parse (instWord& inst)
 {
-    string part=inst.instText.substr(0,inst.instText.at('\t'));
+    int pos = inst.Text.find('\t');
+    string part = inst.Text.substr(0, pos++);
+
     //R
     if (part == "add")
     {
-        
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
+        inst.funct3 = 0b000;
+        inst.funct7 = 0b0000000;
+        inst.opcode = 0b0110011;
+        inst.I_imm  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode =  inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
     }
     else if (part == "sub")
     {
-        
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
+        inst.funct3 = 0b000;
+        inst.funct7 = 0b0100000;
+        inst.opcode = 0b0110011;
+        inst.I_imm  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+
     }
     else if (part == "sll")
     {
-        
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
+        inst.funct3 = 0b001;
+        inst.funct7 = 0b0000000;
+        inst.opcode = 0b0110011;
+        inst.I_imm  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+
     }
     else if (part == "srl")
     {
-        
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
+        inst.funct3 = 0b101;
+        inst.funct7 = 0b0000000;
+        inst.opcode = 0b0110011;
+        inst.I_imm  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+
     }
     else if (part == "sra")
     {
-        
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
+        inst.funct3 = 0b101;
+        inst.funct7 = 0b0100000;
+        inst.opcode = 0b0110011;
+        inst.I_imm  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+
     }
     else if (part == "and")
     {
-        
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
+        inst.funct3 = 0b111;
+        inst.funct7 = 0b0000000;
+        inst.opcode = 0b0110011;
+        inst.I_imm  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+
     }
     else if (part == "or")
     {
-        
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
+        inst.funct3 = 0b110;
+        inst.funct7 = 0b0000000;
+        inst.opcode = 0b0110011;
+        inst.I_imm  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+
     }
     else if (part == "xor")
     {
-        
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
+        inst.funct3 = 0b100;
+        inst.funct7 = 0b0000000;
+        inst.opcode = 0b0110011;
+        inst.I_imm  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+
     }
     else if (part == "slt")
     {
-        
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
+        inst.funct3 = 0b010;
+        inst.funct7 = 0b0000000;
+        inst.opcode = 0b0110011;
+        inst.I_imm  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+
     }
     else if (part == "sltu")
     {
-        
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
+        inst.funct3 = 0b011;
+        inst.funct7 = 0b0000000;
+        inst.opcode = 0b0110011;
+        inst.I_imm  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+
     }
-    
+
     //I
     else if (part == "addi")
     {
-        
+
+
+
     }
     else if (part == "slli")
     {
-        
+
+
+
     }
     else if (part == "srli")
     {
-        
+
+
+
     }
     else if (part == "srai")
     {
-        
+
+
+
     }
     else if (part == "andi")
     {
-        
+
+
+
     }
     else if (part == "ori")
     {
-        
+
+
+
     }
     else if (part == "xori")
     {
-        
+
+
+
     }
     else if (part == "slti")
     {
-        
+
+
+
     }
     else if (part == "sltiu")
     {
-        
+
+
+
     }
     //U
     else if (part == "lui")
     {
-        
+
+
+
     }
     else if (part == "auipc")
     {
-        
+
+
+
     }
     //I
     else if (part == "lb")
     {
-        
+
+
+
     }
     else if (part == "lbu")
     {
-        
+
+
+
     }
     else if (part == "lh")
     {
-        
+
+
+
     }
     else if (part == "lhu")
     {
-        
+
+
+
     }
     else if (part == "lw")
     {
-        
+
+
+
     }
     //S
     else if (part == "sb")
     {
-        
+
+
+
     }
     else if (part == "sh")
     {
-        
+
+
+
     }
     else if (part == "sw")
     {
-        
+
+
+
     }
     //SB
     else if (part == "beq")
     {
-        
+
+
+
     }
     else if (part == "bne")
     {
-        
+
+
+
     }
     else if (part == "blt")
     {
-        
+
+
+
     }
     else if (part == "bltu")
     {
-        
+
+
+
     }
     else if (part == "bge")
     {
-        
+
+
+
     }
     else if (part == "bgeu")
     {
-        
+
+
+
     }
     //UJ
     else if (part == "jal")
     {
-        
+
+
+
     }
     //I
     else if (part == "jalr")
     {
-        
+
+
+
     }
 }
