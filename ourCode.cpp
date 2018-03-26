@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <bitset>
+#include <regex>
 using namespace std;
 
 
@@ -877,7 +878,6 @@ void parse (instWord& inst)
             inst.J_imm  = NULL;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
                                (inst.rs1 << 15) | (inst.I_imm << 20);
-
         }
     }
         //S
