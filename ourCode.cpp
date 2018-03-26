@@ -50,6 +50,7 @@ int main()
     ofstream outFile;
     instWord W;
 
+    outFile.open("output.txt",ios::app);
     inFile.open("div.s");
     if(inFile.is_open())
     {
@@ -65,7 +66,9 @@ int main()
             {
                 return 0;
             }
-
+            
+            cout << hex << W.MachineCode << endl;
+            outFile << hex << W.MachineCode << endl;
             //printPrefix(pc, W.MachineCode);
             //save machine code to an output file
             pc += 4;
