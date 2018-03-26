@@ -7,6 +7,18 @@
 #include <bitset>
 using namespace std;
 
+
+#define SPACE "\\s+"
+#define REG "\\s*x(\\d{1,2})"
+#define LABEL "(\\w+:?)"
+#define IMM "\\s*([-|+]?\\d+)"
+#define OR "|"
+#define REG1    LABEL SPACE REG "," IMM
+#define REG2    LABEL SPACE REG "," REG "," IMM
+#define REG3    LABEL SPACE REG "," REG "," REG
+#define REGi    LABEL SPACE REG "," IMM "\\(" REG "\\)"
+// #define MYEX		REG3 OR REGi OR REG1 OR REG2
+
 struct instWord
 {
     string Text;
@@ -36,7 +48,7 @@ int main()
     ifstream inFile;
     ofstream outFile;
     instWord W;
-    
+
     inFile.open("div.s");
     if(inFile.is_open())
     {
@@ -44,22 +56,22 @@ int main()
         while(!inFile.eof())
         {
             getline (inFile, W.Text);
-            
+
             parse(W);        //parse Text into its instruction format fields
             //Generate instruction machine code and execute instruction
-            
+
             if (instAssembleExec(W)) //execute instructions. return 0 if code for termination and ecall are detected
             {
                 return 0;
             }
-            
+
             //printPrefix(pc, W.MachineCode);
             //save machine code to an output file
             pc += 4;
         }
-        
+
         inFile.close();
-        
+
         // print out the registers values
         for(int i = 0; i < 32; i++)
             cout << "x" << dec << i << ": \t"<< "0x" << hex << setfill('0') << setw(8) << regs[i] << "\n";
@@ -149,9 +161,9 @@ bool instAssembleExec(instWord&inst)
             cout << "unsupported instruction\n";
             return false;
         }
-            
+
     }
-    
+
 }
 
 //function to execute S type
@@ -247,7 +259,7 @@ void Itype(instWord& inst)
                 {
                     int x = memory[regs[inst.rs1] + inst.I_imm] << 8;
                     int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1];
-                    
+
                     regs[inst.rd] = x + y;
                 }
                     break;
@@ -270,7 +282,7 @@ void Itype(instWord& inst)
                 {
                     int x = (unsigned int) memory[regs[inst.rs1] + inst.I_imm] << 8;
                     int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1];
-                    
+
                     regs[inst.rd] = x + y;
                 }
                     break;
@@ -449,11 +461,11 @@ unsigned int getfield(int& after, char beg, char end, string s)
 {
     int x, i, k;
     string sub;
-    
+
     i = s.find(beg, after);
     k = s.find(end, i);
     sub = s.substr(i + 1, k - i - 1);
-    
+
     stringstream stream(sub);
     stream >> x;
     after = k+1;
@@ -462,482 +474,518 @@ unsigned int getfield(int& after, char beg, char end, string s)
 
 void parse (instWord& inst)
 {
-    int pos = inst.Text.find('\t');
-    string part = inst.Text.substr(0, pos++);
-    
-    //R
-    if (part == "add")
+    regex ex(LABEL);
+    smatch m;
+    regex_search(inst.Text, m, ex);
+    string ins = m[1];
+    regex ex1(".+:");
+
+    if(!(regex_match(ins, ex1)))
     {
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
-        inst.funct3 = 0b000;
-        inst.funct7 = 0b0000000;
-        inst.opcode = 0b0110011;
-        inst.I_imm  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode =  inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+        //R
+    {
+        if (ins == "add")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.rs2    = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b000;
+            inst.funct7 = 0b0000000;
+            inst.opcode = 0b0110011;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+        }
+        else if (ins == "sub")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.rs2    = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b000;
+            inst.funct7 = 0b0100000;
+            inst.opcode = 0b0110011;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+
+        }
+        else if (ins == "sll")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.rs2    = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b001;
+            inst.funct7 = 0b0000000;
+            inst.opcode = 0b0110011;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+
+        }
+        else if (ins == "srl")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.rs2    = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b101;
+            inst.funct7 = 0b0000000;
+            inst.opcode = 0b0110011;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+
+        }
+        else if (ins == "sra")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.rs2    = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b101;
+            inst.funct7 = 0b0100000;
+            inst.opcode = 0b0110011;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+
+        }
+        else if (ins == "and")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.rs2    = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b111;
+            inst.funct7 = 0b0000000;
+            inst.opcode = 0b0110011;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+
+        }
+        else if (ins == "or")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.rs2    = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b110;
+            inst.funct7 = 0b0000000;
+            inst.opcode = 0b0110011;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+
+        }
+        else if (ins == "xor")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.rs2    = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b100;
+            inst.funct7 = 0b0000000;
+            inst.opcode = 0b0110011;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+
+        }
+        else if (ins == "slt")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.rs2    = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b010;
+            inst.funct7 = 0b0000000;
+            inst.opcode = 0b0110011;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+
+        }
+        else if (ins == "sltu")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.rs2    = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b011;
+            inst.funct7 = 0b0000000;
+            inst.opcode = 0b0110011;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+
+        }
     }
-    else if (part == "sub")
+        //I
     {
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
-        inst.funct3 = 0b000;
-        inst.funct7 = 0b0100000;
-        inst.opcode = 0b0110011;
-        inst.I_imm  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-        
+        else if (ins == "addi")
+        {
+            regex ex(REG2);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.I_imm  = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b000;
+            inst.opcode = 0b0010011;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.I_imm << 20);
+        }
+        else if (ins == "slli")
+        {
+            regex ex(REG2);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.I_imm  = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b001;
+            inst.opcode = 0b0010011;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.I_imm << 20);
+        }
+        else if (ins == "srli")
+        {
+            regex ex(REG2);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.I_imm  = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b101;
+            inst.opcode = 0b0010011;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.I_imm << 20);
+        }
+        else if (ins == "srai")
+        {
+            regex ex(REG2);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.I_imm  = ((0b010000000000) | (unsigned int)stoi(M[4]));
+            inst.funct3 = 0b101;
+            inst.opcode = 0b0010011;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.I_imm << 20);
+        }
+        else if (ins == "andi")
+        {
+            regex ex(REG2);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.I_imm  = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b111;
+            inst.opcode = 0b0010011;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.I_imm << 20);
+        }
+        else if (ins == "ori")
+        {
+            regex ex(REG2);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.I_imm  = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b110;
+            inst.opcode = 0b0010011;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.I_imm << 20);
+        }
+        else if (ins == "xori")
+        {
+            regex ex(REG2);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.I_imm  = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b100;
+            inst.opcode = 0b0010011;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.I_imm << 20);
+        }
+        else if (ins == "slti")
+        {
+            regex ex(REG2);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.I_imm  = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b010;
+            inst.opcode = 0b0010011;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.I_imm << 20);
+        }
+        else if (ins == "sltiu")
+        {
+            regex ex(REG2);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.I_imm  = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b011;
+            inst.opcode = 0b0010011;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.I_imm << 20);
+        }
     }
-    else if (part == "sll")
+        //U
     {
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
-        inst.funct3 = 0b001;
-        inst.funct7 = 0b0000000;
-        inst.opcode = 0b0110011;
-        inst.I_imm  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-        
+        else if (ins == "lui")
+        {
+            regex ex(REGi);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.U_imm  = (unsigned int)stoi(M[3]);
+            inst.opcode = 0b0110111;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.U_imm << 12);
+        }
+        else if (ins == "auipc")
+        {
+            regex ex(REGi);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.U_imm  = (unsigned int)stoi(M[3]);
+            inst.opcode = 0b0010111;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.U_imm << 12);
+        }
     }
-    else if (part == "srl")
+        //I
     {
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
-        inst.funct3 = 0b101;
-        inst.funct7 = 0b0000000;
-        inst.opcode = 0b0110011;
-        inst.I_imm  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-        
+        else if (ins == "lb")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[]);
+            inst.rs1    = (unsigned int)stoi(M[]);
+            inst.I_imm    = (unsigned int)stoi(M[]);
+            inst.funct3 = 0b000;
+            inst.funct7 = NULL;
+            inst.opcode = 0b0000011;
+            inst.rs2  = NULL;
+            inst.S_imm  = NULL;
+            inst.B_imm  = NULL;
+            inst.U_imm  = NULL;
+            inst.J_imm  = NULL;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.I_imm << 20);
+
+        }
+        else if (ins == "lbu")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[]);
+            inst.rs1    = (unsigned int)stoi(M[]);
+            inst.I_imm    = (unsigned int)stoi(M[]);
+            inst.funct3 = 0b100;
+            inst.funct7 = NULL;
+            inst.opcode = 0b0000011;
+            inst.rs2  = NULL;
+            inst.S_imm  = NULL;
+            inst.B_imm  = NULL;
+            inst.U_imm  = NULL;
+            inst.J_imm  = NULL;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.I_imm << 20);
+
+        }
+        else if (ins == "lh")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[]);
+            inst.rs1    = (unsigned int)stoi(M[]);
+            inst.I_imm    = (unsigned int)stoi(M[]);
+            inst.funct3 = 0b001;
+            inst.funct7 = NULL;
+            inst.opcode = 0b0000011;
+            inst.rs2  = NULL;
+            inst.S_imm  = NULL;
+            inst.B_imm  = NULL;
+            inst.U_imm  = NULL;
+            inst.J_imm  = NULL;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.I_imm << 20);
+
+        }
+        else if (ins == "lhu")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[]);
+            inst.rs1    = (unsigned int)stoi(M[]);
+            inst.I_imm    = (unsigned int)stoi(M[]);
+            inst.funct3 = 0b101;
+            inst.funct7 = NULL;
+            inst.opcode = 0b0000011;
+            inst.rs2  = NULL;
+            inst.S_imm  = NULL;
+            inst.B_imm  = NULL;
+            inst.U_imm  = NULL;
+            inst.J_imm  = NULL;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.I_imm << 20);
+
+        }
+        else if (ins == "lw")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+            inst.rd     = (unsigned int)stoi(M[]);
+            inst.rs1    = (unsigned int)stoi(M[]);
+            inst.I_imm    = (unsigned int)stoi(M[]);
+            inst.funct3 = 0b010;
+            inst.funct7 = NULL;
+            inst.opcode = 0b0000011;
+            inst.rs2  = NULL;
+            inst.S_imm  = NULL;
+            inst.B_imm  = NULL;
+            inst.U_imm  = NULL;
+            inst.J_imm  = NULL;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.I_imm << 20);
+
+        }
     }
-    else if (part == "sra")
+        //S
     {
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
-        inst.funct3 = 0b101;
-        inst.funct7 = 0b0100000;
-        inst.opcode = 0b0110011;
-        inst.I_imm  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-        
+        else if (ins == "sb")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+
+
+        }
+        else if (ins == "sh")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+
+
+        }
+        else if (ins == "sw")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+
+
+        }
     }
-    else if (part == "and")
+        //SB
     {
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
-        inst.funct3 = 0b111;
-        inst.funct7 = 0b0000000;
-        inst.opcode = 0b0110011;
-        inst.I_imm  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-        
+        else if (ins == "beq")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+
+
+        }
+        else if (ins == "bne")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+
+
+        }
+        else if (ins == "blt")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+
+
+        }
+        else if (ins == "bltu")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+
+
+        }
+        else if (ins == "bge")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+
+
+        }
+        else if (ins == "bgeu")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+
+
+        }
     }
-    else if (part == "or")
+        //UJ
     {
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
-        inst.funct3 = 0b110;
-        inst.funct7 = 0b0000000;
-        inst.opcode = 0b0110011;
-        inst.I_imm  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-        
+        else if (ins == "jal")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+
+
+        }
+        //I
+        else if (ins == "jalr")
+        {
+            regex ex(REG3);
+            smatch M;
+            regex_search(inst.Text, M, ex);
+
+
+        }
     }
-    else if (part == "xor")
-    {
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
-        inst.funct3 = 0b100;
-        inst.funct7 = 0b0000000;
-        inst.opcode = 0b0110011;
-        inst.I_imm  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-        
+        else
+        {
+            //UNKOWN
+        }
     }
-    else if (part == "slt")
+    else
     {
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
-        inst.funct3 = 0b010;
-        inst.funct7 = 0b0000000;
-        inst.opcode = 0b0110011;
-        inst.I_imm  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-        
-    }
-    else if (part == "sltu")
-    {
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.rs2    = getfield(pos, 'x', '\n', inst.Text);
-        inst.funct3 = 0b011;
-        inst.funct7 = 0b0000000;
-        inst.opcode = 0b0110011;
-        inst.I_imm  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-        
-    }
-    
-    //I
-    else if (part == "addi")
-    {
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
-        inst.funct3 = 0b000;
-        inst.funct7 = NULL;
-        inst.opcode = 0b0010011;
-        inst.rs2  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.I_imm << 20);
-    }
-    else if (part == "slli")
-    {
-        
-        
-    }
-    else if (part == "srli")
-    {
-        
-        
-        
-    }
-    else if (part == "srai")
-    {
-        
-        
-        
-    }
-    else if (part == "andi")
-    {
-        
-        
-        
-    }
-    else if (part == "ori")
-    {
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
-        inst.funct3 = 0b110;
-        inst.funct7 = NULL;
-        inst.opcode = 0b0010011;
-        inst.rs2  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.I_imm << 20);
-        
-    }
-    else if (part == "xori")
-    {
-        
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
-        inst.funct3 = 0b100;
-        inst.funct7 = NULL;
-        inst.opcode = 0b0010011;
-        inst.rs2  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.I_imm << 20);
-        
-    }
-    else if (part == "slti")
-    {
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
-        inst.funct3 = 0b010;
-        inst.funct7 = NULL;
-        inst.opcode = 0b0010011;
-        inst.rs2  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.I_imm << 20);
-        
-        
-    }
-    else if (part == "sltiu")
-    {
-        
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
-        inst.funct3 = 0b011;
-        inst.funct7 = NULL;
-        inst.opcode = 0b0010011;
-        inst.rs2  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.I_imm << 20);
-        
-    }
-    //U
-    else if (part == "lui")
-    {
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.U_imm    = getfield(--pos, ',', '\n', inst.Text) << 12;
-        inst.funct3 = NULL;
-        inst.funct7 = NULL;
-        inst.opcode = 0b0110111;
-        inst.rs2  = NULL;
-        inst.rs1  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.U_imm << 12);
-        
-        
-    }
-    else if (part == "auipc")
-    {
-        
-        inst.U_imm    = getfield(--pos, ',', '\n', inst.Text) << 12;
-        inst.funct3 = NULL;
-        inst.funct7 = NULL;
-        inst.opcode = 0b0010111;
-        inst.rs2  = NULL;
-        inst.rs1  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.U_imm << 12);
-        
-    }
-    //I
-    else if (part == "lb")
-    {
-        
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
-        inst.funct3 = 0b000;
-        inst.funct7 = NULL;
-        inst.opcode = 0b0000011;
-        inst.rs2  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.I_imm << 20);
-        
-    }
-    else if (part == "lbu")
-    {
-        
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
-        inst.funct3 = 0b100;
-        inst.funct7 = NULL;
-        inst.opcode = 0b0000011;
-        inst.rs2  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.I_imm << 20);
-        
-    }
-    else if (part == "lh")
-    {
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
-        inst.funct3 = 0b001;
-        inst.funct7 = NULL;
-        inst.opcode = 0b0000011;
-        inst.rs2  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.I_imm << 20);
-        
-    }
-    else if (part == "lhu")
-    {
-        
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
-        inst.funct3 = 0b101;
-        inst.funct7 = NULL;
-        inst.opcode = 0b0000011;
-        inst.rs2  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.I_imm << 20);
-        
-    }
-    else if (part == "lw")
-    {
-        
-        inst.rd     = getfield(pos, 'x', ',', inst.Text);
-        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
-        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
-        inst.funct3 = 0b010;
-        inst.funct7 = NULL;
-        inst.opcode = 0b0000011;
-        inst.rs2  = NULL;
-        inst.S_imm  = NULL;
-        inst.B_imm  = NULL;
-        inst.U_imm  = NULL;
-        inst.J_imm  = NULL;
-        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-        (inst.rs1 << 15) | (inst.I_imm << 20);
-        
-    }
-    //S
-    else if (part == "sb")
-    {
-        
-        
-        
-    }
-    else if (part == "sh")
-    {
-        
-        
-        
-    }
-    else if (part == "sw")
-    {
-        
-        
-        
-    }
-    //SB
-    else if (part == "beq")
-    {
-        
-        
-        
-    }
-    else if (part == "bne")
-    {
-        
-        
-        
-    }
-    else if (part == "blt")
-    {
-        
-        
-        
-    }
-    else if (part == "bltu")
-    {
-        
-        
-        
-    }
-    else if (part == "bge")
-    {
-        
-        
-        
-    }
-    else if (part == "bgeu")
-    {
-        
-        
-        
-    }
-    //UJ
-    else if (part == "jal")
-    {
-        
-        
-        
-    }
-    //I
-    else if (part == "jalr")
-    {
-        
-        
-        
+        // LABEL CODE
+        cout <<"LABEL";
     }
 }
