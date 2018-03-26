@@ -36,7 +36,7 @@ int main()
     ifstream inFile;
     ofstream outFile;
     instWord W;
-
+    
     inFile.open("div.s");
     if(inFile.is_open())
     {
@@ -44,22 +44,22 @@ int main()
         while(!inFile.eof())
         {
             getline (inFile, W.Text);
-
+            
             parse(W);        //parse Text into its instruction format fields
             //Generate instruction machine code and execute instruction
-
+            
             if (instAssembleExec(W)) //execute instructions. return 0 if code for termination and ecall are detected
             {
                 return 0;
             }
-
+            
             //printPrefix(pc, W.MachineCode);
             //save machine code to an output file
             pc += 4;
         }
-
+        
         inFile.close();
-
+        
         // print out the registers values
         for(int i = 0; i < 32; i++)
             cout << "x" << dec << i << ": \t"<< "0x" << hex << setfill('0') << setw(8) << regs[i] << "\n";
@@ -149,9 +149,9 @@ bool instAssembleExec(instWord&inst)
             cout << "unsupported instruction\n";
             return false;
         }
-
+            
     }
-
+    
 }
 
 //function to execute S type
@@ -247,7 +247,7 @@ void Itype(instWord& inst)
                 {
                     int x = memory[regs[inst.rs1] + inst.I_imm] << 8;
                     int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1];
-
+                    
                     regs[inst.rd] = x + y;
                 }
                     break;
@@ -270,7 +270,7 @@ void Itype(instWord& inst)
                 {
                     int x = (unsigned int) memory[regs[inst.rs1] + inst.I_imm] << 8;
                     int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1];
-
+                    
                     regs[inst.rd] = x + y;
                 }
                     break;
@@ -337,48 +337,49 @@ void Rtype (instWord& inst)
 //function to execute SB instructions
 void SBtype (instWord& inst)
 {
+    int B_imm = inst.B_imm << 1;
     switch (inst.funct3)
     {
             //beq
         case 0:
         {
             if (regs[inst.rs1] == regs[inst.rs2])
-                pc = pc + inst.B_imm;
+                pc = pc + B_imm;
         }
             break;
             //bne
         case 1:
         {
             if (regs[inst.rs1] != regs[inst.rs2])
-                pc = pc + inst.B_imm;
+                pc = pc + B_imm;
         }
             break;
             //blt
         case 4:
         {
             if (regs[inst.rs1] < regs[inst.rs2])
-                pc = pc + inst.B_imm;
+                pc = pc + B_imm;
         }
             break;
             //bge
         case 5:
         {
             if (regs[inst.rs1] >= regs[inst.rs2])
-                pc = pc + inst.B_imm;
+                pc = pc + B_imm;
         }
             break;
             //bltu
         case 6:
         {
             if ((unsigned int)regs[inst.rs1] < (unsigned int)regs[inst.rs2])
-                pc = pc + inst.B_imm;
+                pc = pc + B_imm;
         }
             break;
             //bgeu
         case 7:
         {
             if ((unsigned int)regs[inst.rs1] >= (unsigned int)regs[inst.rs2])
-                pc = pc + inst.B_imm;
+                pc = pc + B_imm;
         }
             break;
         default:
@@ -389,8 +390,9 @@ void SBtype (instWord& inst)
 //function to execute UJ instructions
 void UJtype (instWord& inst)
 {
+    int J_imm = inst.J_imm << 1;
     inst.rd = pc + 4;
-    pc = pc + inst.J_imm;
+    pc = pc + J_imm;
 }
 
 //function to execute U instructions
@@ -445,24 +447,24 @@ bool ecall (instWord& inst)
 
 unsigned int getfield(int& after, char beg, char end, string s)
 {
-	int x, i, k;
-	string sub;
-
-	i = s.find(beg, after);
-	k = s.find(end, i);
-	sub = s.substr(i + 1, k - i - 1);
-
-	stringstream stream(sub);
-	stream >> x;
-	after = k+1;
-	return x;
+    int x, i, k;
+    string sub;
+    
+    i = s.find(beg, after);
+    k = s.find(end, i);
+    sub = s.substr(i + 1, k - i - 1);
+    
+    stringstream stream(sub);
+    stream >> x;
+    after = k+1;
+    return x;
 }
 
 void parse (instWord& inst)
 {
     int pos = inst.Text.find('\t');
     string part = inst.Text.substr(0, pos++);
-
+    
     //R
     if (part == "add")
     {
@@ -478,8 +480,8 @@ void parse (instWord& inst)
         inst.U_imm  = NULL;
         inst.J_imm  = NULL;
         inst.MachineCode =  inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
     }
     else if (part == "sub")
     {
@@ -495,8 +497,8 @@ void parse (instWord& inst)
         inst.U_imm  = NULL;
         inst.J_imm  = NULL;
         inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+        
     }
     else if (part == "sll")
     {
@@ -512,8 +514,8 @@ void parse (instWord& inst)
         inst.U_imm  = NULL;
         inst.J_imm  = NULL;
         inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+        
     }
     else if (part == "srl")
     {
@@ -529,8 +531,8 @@ void parse (instWord& inst)
         inst.U_imm  = NULL;
         inst.J_imm  = NULL;
         inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+        
     }
     else if (part == "sra")
     {
@@ -546,8 +548,8 @@ void parse (instWord& inst)
         inst.U_imm  = NULL;
         inst.J_imm  = NULL;
         inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+        
     }
     else if (part == "and")
     {
@@ -563,8 +565,8 @@ void parse (instWord& inst)
         inst.U_imm  = NULL;
         inst.J_imm  = NULL;
         inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+        
     }
     else if (part == "or")
     {
@@ -580,8 +582,8 @@ void parse (instWord& inst)
         inst.U_imm  = NULL;
         inst.J_imm  = NULL;
         inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+        
     }
     else if (part == "xor")
     {
@@ -597,8 +599,8 @@ void parse (instWord& inst)
         inst.U_imm  = NULL;
         inst.J_imm  = NULL;
         inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+        
     }
     else if (part == "slt")
     {
@@ -614,8 +616,8 @@ void parse (instWord& inst)
         inst.U_imm  = NULL;
         inst.J_imm  = NULL;
         inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+        
     }
     else if (part == "sltu")
     {
@@ -631,177 +633,311 @@ void parse (instWord& inst)
         inst.U_imm  = NULL;
         inst.J_imm  = NULL;
         inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                    (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+        (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+        
     }
-
+    
     //I
     else if (part == "addi")
     {
-
-
-
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
+        inst.funct3 = 0b000;
+        inst.funct7 = NULL;
+        inst.opcode = 0b0010011;
+        inst.rs2  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+        (inst.rs1 << 15) | (inst.I_imm << 20);
     }
     else if (part == "slli")
     {
-
-
-
+        
+        
     }
     else if (part == "srli")
     {
-
-
-
+        
+        
+        
     }
     else if (part == "srai")
     {
-
-
-
+        
+        
+        
     }
     else if (part == "andi")
     {
-
-
-
+        
+        
+        
     }
     else if (part == "ori")
     {
-
-
-
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
+        inst.funct3 = 0b110;
+        inst.funct7 = NULL;
+        inst.opcode = 0b0010011;
+        inst.rs2  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+        (inst.rs1 << 15) | (inst.I_imm << 20);
+        
     }
     else if (part == "xori")
     {
-
-
-
+        
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
+        inst.funct3 = 0b100;
+        inst.funct7 = NULL;
+        inst.opcode = 0b0010011;
+        inst.rs2  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+        (inst.rs1 << 15) | (inst.I_imm << 20);
+        
     }
     else if (part == "slti")
     {
-
-
-
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
+        inst.funct3 = 0b010;
+        inst.funct7 = NULL;
+        inst.opcode = 0b0010011;
+        inst.rs2  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+        (inst.rs1 << 15) | (inst.I_imm << 20);
+        
+        
     }
     else if (part == "sltiu")
     {
-
-
-
+        
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
+        inst.funct3 = 0b011;
+        inst.funct7 = NULL;
+        inst.opcode = 0b0010011;
+        inst.rs2  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+        (inst.rs1 << 15) | (inst.I_imm << 20);
+        
     }
     //U
     else if (part == "lui")
     {
-
-
-
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.U_imm    = getfield(--pos, ',', '\n', inst.Text) << 12;
+        inst.funct3 = NULL;
+        inst.funct7 = NULL;
+        inst.opcode = 0b0110111;
+        inst.rs2  = NULL;
+        inst.rs1  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.U_imm << 12);
+        
+        
     }
     else if (part == "auipc")
     {
-
-
-
+        
+        inst.U_imm    = getfield(--pos, ',', '\n', inst.Text) << 12;
+        inst.funct3 = NULL;
+        inst.funct7 = NULL;
+        inst.opcode = 0b0010111;
+        inst.rs2  = NULL;
+        inst.rs1  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.U_imm << 12);
+        
     }
     //I
     else if (part == "lb")
     {
-
-
-
+        
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
+        inst.funct3 = 0b000;
+        inst.funct7 = NULL;
+        inst.opcode = 0b0000011;
+        inst.rs2  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+        (inst.rs1 << 15) | (inst.I_imm << 20);
+        
     }
     else if (part == "lbu")
     {
-
-
-
+        
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
+        inst.funct3 = 0b100;
+        inst.funct7 = NULL;
+        inst.opcode = 0b0000011;
+        inst.rs2  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+        (inst.rs1 << 15) | (inst.I_imm << 20);
+        
     }
     else if (part == "lh")
     {
-
-
-
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
+        inst.funct3 = 0b001;
+        inst.funct7 = NULL;
+        inst.opcode = 0b0000011;
+        inst.rs2  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+        (inst.rs1 << 15) | (inst.I_imm << 20);
+        
     }
     else if (part == "lhu")
     {
-
-
-
+        
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
+        inst.funct3 = 0b101;
+        inst.funct7 = NULL;
+        inst.opcode = 0b0000011;
+        inst.rs2  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+        (inst.rs1 << 15) | (inst.I_imm << 20);
+        
     }
     else if (part == "lw")
     {
-
-
-
+        
+        inst.rd     = getfield(pos, 'x', ',', inst.Text);
+        inst.rs1    = getfield(pos, 'x', ',', inst.Text);
+        inst.I_imm    = getfield(--pos, ',', '\n', inst.Text);
+        inst.funct3 = 0b010;
+        inst.funct7 = NULL;
+        inst.opcode = 0b0000011;
+        inst.rs2  = NULL;
+        inst.S_imm  = NULL;
+        inst.B_imm  = NULL;
+        inst.U_imm  = NULL;
+        inst.J_imm  = NULL;
+        inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+        (inst.rs1 << 15) | (inst.I_imm << 20);
+        
     }
     //S
     else if (part == "sb")
     {
-
-
-
+        
+        
+        
     }
     else if (part == "sh")
     {
-
-
-
+        
+        
+        
     }
     else if (part == "sw")
     {
-
-
-
+        
+        
+        
     }
     //SB
     else if (part == "beq")
     {
-
-
-
+        
+        
+        
     }
     else if (part == "bne")
     {
-
-
-
+        
+        
+        
     }
     else if (part == "blt")
     {
-
-
-
+        
+        
+        
     }
     else if (part == "bltu")
     {
-
-
-
+        
+        
+        
     }
     else if (part == "bge")
     {
-
-
-
+        
+        
+        
     }
     else if (part == "bgeu")
     {
-
-
-
+        
+        
+        
     }
     //UJ
     else if (part == "jal")
     {
-
-
-
+        
+        
+        
     }
     //I
     else if (part == "jalr")
     {
-
-
-
+        
+        
+        
     }
 }
