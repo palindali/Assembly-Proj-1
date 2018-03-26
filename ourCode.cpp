@@ -484,7 +484,6 @@ void parse (instWord& inst)
     if(!(regex_match(ins, ex1)))
     {
         //R
-    {
         if (ins == "add")
         {
             regex ex(REG3);
@@ -634,9 +633,7 @@ void parse (instWord& inst)
                                (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
 
         }
-    }
         //I
-    {
         else if (ins == "addi")
         {
             regex ex(REG2);
@@ -754,9 +751,7 @@ void parse (instWord& inst)
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
                                (inst.rs1 << 15) | (inst.I_imm << 20);
         }
-    }
         //U
-    {
         else if (ins == "lui")
         {
             regex ex(REGi);
@@ -777,9 +772,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0010111;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.U_imm << 12);
         }
-    }
         //I
-    {
         else if (ins == "lb")
         {
             regex ex(REG3);
@@ -879,9 +872,7 @@ void parse (instWord& inst)
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
                                (inst.rs1 << 15) | (inst.I_imm << 20);
         }
-    }
         //S
-    {
         else if (ins == "sb")
         {
             regex ex(REG3);
@@ -906,9 +897,7 @@ void parse (instWord& inst)
 
 
         }
-    }
         //SB
-    {
         else if (ins == "beq")
         {
             regex ex(REG3);
@@ -957,9 +946,7 @@ void parse (instWord& inst)
 
 
         }
-    }
         //UJ
-    {
         else if (ins == "jal")
         {
             regex ex(REG3);
@@ -977,7 +964,6 @@ void parse (instWord& inst)
 
 
         }
-    }
         else
         {
             //UNKOWN
