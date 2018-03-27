@@ -13,7 +13,7 @@ using namespace std;
 
 #define SPACE "\\s+"
 #define REG "\\s*x(\\d{1,2})"
-#define LABEL "(\\w+:?)"
+#define LABEL "(\\w+):?"
 #define JLABEL "^(\\w+):$"
 #define IMM "\\s*([-|+]?\\d+|0x\\d+)"
 #define NEG "^-"
@@ -52,6 +52,7 @@ void UJtype (instWord& inst);
 void Utype (instWord& inst);
 bool ecall (instWord& inst);
 void parse (instWord& inst);
+fstream& GotoLine(std::fstream& file, unsigned int num);
 
 unordered_map <string, int> map;
 
@@ -96,6 +97,13 @@ int main()
                 cout << "0x" << hex << setfill('0') << setw(8) << W.MachineCode << endl;
                 outFile << "0x" << hex << setfill('0') << setw(8) << W.MachineCode << endl;
             }
+            if(W.known || W.islabel)
+            {
+                memory[pc] = W.MachineCode & (0b11111111 << 24);
+                memory[pc] = W.MachineCode & (0b11111111 << 16);
+                memory[pc] = W.MachineCode & (0b11111111 << 8);
+                memory[pc] = W.MachineCode & (0b11111111);
+            }
             pc += 4;
         }
         //printPrefix(pc, W.MachineCode);
@@ -114,9 +122,11 @@ int main()
                 outFile.close();
                 for(int i = 0; i < 32; i++)
                     cout << "x" << dec << i << ": \t"<< "0x" << hex << setfill('0') << setw(8) << regs[i] << "\n";
+                cout<< "Ecall exit"<<endl;
                 return 0;
             }
-            GotoLine(file, pc/4);
+            if(W.islabel)
+            // GotoLine(inFile, pc/4);
             pc+=4;
         }
 
@@ -1303,11 +1313,11 @@ void parse (instWord& inst)
     }
 }
 
-fstream& GotoLine(std::fstream& file, unsigned int num){
+fstream& GotoLine(std::fstream& file, unsigned int num)
+{
     file.seekg(std::ios::beg);
     for(int i=0; i < num - 1; ++i){
         file.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
     }
     return file;
 }
-
