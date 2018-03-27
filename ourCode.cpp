@@ -6,13 +6,15 @@
 #include <sstream>
 #include <bitset>
 #include <regex>
+#include <unordered_map>
 using namespace std;
 
 
 #define SPACE "\\s+"
 #define REG "\\s*x(\\d{1,2})"
 #define LABEL "(\\w+:?)"
-#define IMM "\\s*([-|+]?\\d+)"
+#define JLABEL "^(\\w+):$"
+#define IMM "\\s*(([-|+]?\\d+)|0x(\\d+))"
 #define OR "|"
 #define REG1    LABEL SPACE REG "," IMM
 #define REG2    LABEL SPACE REG "," REG "," IMM
@@ -57,6 +59,22 @@ int main()
     inFile.open("div.s");
     if(inFile.is_open())
     {
+        int i = 0;
+        string s;
+        smatch m;
+        regex lbl(JLABEL);
+        unordered_map <string, int> map;
+        // go through file to find labels
+        while(!inFile.eof())
+        {
+            getline(inFile, s);
+            if(regex_search(s, m, lbl))
+            {
+                map.insert(make_pair<string, int> (m[1], i));
+            }
+            i++;
+        }
+
         pc = 0x0;
         while(!inFile.eof())
         {
