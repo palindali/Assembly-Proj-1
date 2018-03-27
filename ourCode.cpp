@@ -18,6 +18,8 @@ using namespace std;
 #define REG2    LABEL SPACE REG "," REG "," IMM
 #define REG3    LABEL SPACE REG "," REG "," REG
 #define REGi    LABEL SPACE REG "," IMM "\\(" REG "\\)"
+#define JAL1    LABEL SPACE REG ",\\s*" LABEL
+#define BRANCH    LABEL SPACE REG "," REG ",\\s*" LABEL
 // #define MYEX		REG3 OR REGi OR REG1 OR REG2
 
 struct instWord
@@ -26,6 +28,8 @@ struct instWord
     unsigned int MachineCode;
     unsigned int rd, rs1, rs2, funct3, funct7, opcode;
     unsigned int I_imm, S_imm, B_imm, U_imm, J_imm;
+    string J_label;
+    bool known = true, islabel = false;
 };
 int regs[32]={0}; //register simulation
 unsigned int pc = 0x0; //program counter
@@ -34,7 +38,6 @@ char memory[8*1024];    // 8KB of memory located at address 0
 // Function prototype
 bool instAssembleExec (instWord& inst);
 void printPrefix (unsigned int instA, unsigned int instCode);
-void emitError (char *s);
 void Rtype (instWord& inst);
 void Itype (instWord& inst);
 void Stype (instWord& inst);
@@ -61,14 +64,16 @@ int main()
 
             parse(W);        //parse Text into its instruction format fields
             //Generate instruction machine code and execute instruction
-
-            if (instAssembleExec(W)) //execute instructions. return 0 if code for termination and ecall are detected
+            if (W.known)
             {
-                return 0;
+                if (instAssembleExec(W)) //execute instructions. return 0 if code for termination and ecall are detected
+                {
+                    return 0;
+                }
             }
-            
-            cout << hex << W.MachineCode << endl;
-            outFile << hex << W.MachineCode << endl;
+
+            cout << "0x" << hex << setfill('0') << setw(8) << W.MachineCode << endl;
+            outFile << "0x" << hex << setfill('0') << setw(8) << W.MachineCode << endl;
             //printPrefix(pc, W.MachineCode);
             //save machine code to an output file
             pc += 4;
@@ -81,13 +86,7 @@ int main()
             cout << "x" << dec << i << ": \t"<< "0x" << hex << setfill('0') << setw(8) << regs[i] << "\n";
     }
     else
-        emitError("Cannot access input file\n");
-}
-
-void emitError(char *s)
-{
-    cout << s;
-    exit(0);
+        cout << "Cannot access input file\n";
 }
 
 void printPrefix(unsigned int instA, unsigned int instCode)
@@ -220,7 +219,7 @@ void Itype(instWord& inst)
                 }
                     break;
                     //slti
-                case 2: regs[inst.rd] = (regs[inst.rs1] < (inst.I_imm));
+                case 2: regs[inst.rd] = (regs[inst.rs1] < int(inst.I_imm));
                     break;
                     //sltiu
                 case 3: regs[inst.rd] = ( (unsigned int) regs[inst.rs1] < ((unsigned int)inst.I_imm) );
@@ -461,20 +460,20 @@ bool ecall (instWord& inst)
     }
 }
 
-unsigned int getfield(int& after, char beg, char end, string s)
-{
-    int x, i, k;
-    string sub;
-
-    i = s.find(beg, after);
-    k = s.find(end, i);
-    sub = s.substr(i + 1, k - i - 1);
-
-    stringstream stream(sub);
-    stream >> x;
-    after = k+1;
-    return x;
-}
+// unsigned int getfield(int& after, char beg, char end, string s)
+// {
+//     int x, i, k;
+//     string sub;
+//
+//     i = s.find(beg, after);
+//     k = s.find(end, i);
+//     sub = s.substr(i + 1, k - i - 1);
+//
+//     stringstream stream(sub);
+//     stream >> x;
+//     after = k+1;
+//     return x;
+// }
 
 void parse (instWord& inst)
 {
@@ -806,12 +805,12 @@ void parse (instWord& inst)
         }
         else if (ins == "lh")
         {
-            regex ex(REG3);
+            regex ex(REGi);
             smatch M;
             regex_search(inst.Text, M, ex);
-            inst.rd     = (unsigned int)stoi(M[]);
-            inst.rs1    = (unsigned int)stoi(M[]);
-            inst.I_imm    = (unsigned int)stoi(M[]);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[4]);
+            inst.I_imm    = (unsigned int)stoi(M[3]);
             inst.funct3 = 0b001;
             inst.opcode = 0b0000011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
@@ -820,143 +819,189 @@ void parse (instWord& inst)
         }
         else if (ins == "lhu")
         {
-            regex ex(REG3);
+            regex ex(REGi);
             smatch M;
             regex_search(inst.Text, M, ex);
-            inst.rd     = (unsigned int)stoi(M[]);
-            inst.rs1    = (unsigned int)stoi(M[]);
-            inst.I_imm    = (unsigned int)stoi(M[]);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[4]);
+            inst.I_imm    = (unsigned int)stoi(M[3]);
             inst.funct3 = 0b101;
-            inst.funct7 = NULL;
             inst.opcode = 0b0000011;
-            inst.rs2  = NULL;
-            inst.S_imm  = NULL;
-            inst.B_imm  = NULL;
-            inst.U_imm  = NULL;
-            inst.J_imm  = NULL;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
                                (inst.rs1 << 15) | (inst.I_imm << 20);
 
         }
         else if (ins == "lw")
         {
-            regex ex(REG3);
+            regex ex(REGi);
             smatch M;
             regex_search(inst.Text, M, ex);
-            inst.rd     = (unsigned int)stoi(M[]);
-            inst.rs1    = (unsigned int)stoi(M[]);
-            inst.I_imm    = (unsigned int)stoi(M[]);
+            inst.rd     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[4]);
+            inst.I_imm    = (unsigned int)stoi(M[3]);
             inst.funct3 = 0b010;
-            inst.funct7 = NULL;
             inst.opcode = 0b0000011;
-            inst.rs2  = NULL;
-            inst.S_imm  = NULL;
-            inst.B_imm  = NULL;
-            inst.U_imm  = NULL;
-            inst.J_imm  = NULL;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
                                (inst.rs1 << 15) | (inst.I_imm << 20);
         }
         //S
         else if (ins == "sb")
         {
-            regex ex(REG3);
+            regex ex(REGi);
             smatch M;
             regex_search(inst.Text, M, ex);
-
-
+            inst.rs2     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[4]);
+            inst.S_imm    = (unsigned int)stoi(M[3]);
+            inst.funct3 = 0b000;
+            inst.opcode = 0b0100011;
+            inst.MachineCode = inst.opcode | ((inst.S_imm & 0b000000011111) << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.S_imm & 0b111111100000) << 20);
         }
         else if (ins == "sh")
         {
-            regex ex(REG3);
+            regex ex(REGi);
             smatch M;
             regex_search(inst.Text, M, ex);
-
-
+            inst.rs2     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[4]);
+            inst.S_imm    = (unsigned int)stoi(M[3]);
+            inst.funct3 = 0b001;
+            inst.opcode = 0b0100011;
+            inst.MachineCode = inst.opcode | ((inst.S_imm & 0b000000011111) << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.S_imm & 0b111111100000) << 20);
         }
         else if (ins == "sw")
         {
-            regex ex(REG3);
+            regex ex(REGi);
             smatch M;
             regex_search(inst.Text, M, ex);
-
-
+            inst.rs2     = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[4]);
+            inst.S_imm    = (unsigned int)stoi(M[3]);
+            inst.funct3 = 0b010;
+            inst.opcode = 0b0100011;
+            inst.MachineCode = inst.opcode | ((inst.S_imm & 0b000000011111) << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.S_imm & 0b111111100000) << 20);
         }
         //SB
         else if (ins == "beq")
         {
-            regex ex(REG3);
+            regex ex(BRANCH);
             smatch M;
             regex_search(inst.Text, M, ex);
-
-
-        }
+            inst.rs1    = (unsigned int)stoi(M[2]);
+            inst.rs2    = (unsigned int)stoi(M[3]);
+            inst.J_label  = M[4];
+            // inst.B_imm  = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b000;
+            inst.opcode = 0b1100011;
+            inst.MachineCode = inst.opcode | ((inst.B_imm & 0b0100000000000) >> 4) | ((inst.B_imm & 0b0000000011110) << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.B_imm & 0b0011111100000) << 20) | ((inst.B_imm & 0b1000000000000) << 19);        }
         else if (ins == "bne")
         {
-            regex ex(REG3);
+            regex ex(BRANCH);
             smatch M;
             regex_search(inst.Text, M, ex);
-
-
-        }
+            inst.rs1    = (unsigned int)stoi(M[2]);
+            inst.rs2    = (unsigned int)stoi(M[3]);
+            inst.J_label  = M[4];
+            // inst.B_imm  = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b001;
+            inst.opcode = 0b1100011;
+            inst.MachineCode = inst.opcode | ((inst.B_imm & 0b0100000000000) >> 4) | ((inst.B_imm & 0b0000000011110) << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.B_imm & 0b0011111100000) << 20) | ((inst.B_imm & 0b1000000000000) << 19);        }
         else if (ins == "blt")
         {
-            regex ex(REG3);
+            regex ex(BRANCH);
             smatch M;
             regex_search(inst.Text, M, ex);
-
-
-        }
+            inst.rs1    = (unsigned int)stoi(M[2]);
+            inst.rs2    = (unsigned int)stoi(M[3]);
+            inst.J_label  = M[4];
+            // inst.B_imm  = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b100;
+            inst.opcode = 0b1100011;
+            inst.MachineCode = inst.opcode | ((inst.B_imm & 0b0100000000000) >> 4) | ((inst.B_imm & 0b0000000011110) << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.B_imm & 0b0011111100000) << 20) | ((inst.B_imm & 0b1000000000000) << 19);        }
         else if (ins == "bltu")
         {
-            regex ex(REG3);
+            regex ex(BRANCH);
             smatch M;
             regex_search(inst.Text, M, ex);
-
-
-        }
+            inst.rs1    = (unsigned int)stoi(M[2]);
+            inst.rs2    = (unsigned int)stoi(M[3]);
+            inst.J_label  = M[4];
+            // inst.B_imm  = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b110;
+            inst.opcode = 0b1100011;
+            inst.MachineCode = inst.opcode | ((inst.B_imm & 0b0100000000000) >> 4) | ((inst.B_imm & 0b0000000011110) << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.B_imm & 0b0011111100000) << 20) | ((inst.B_imm & 0b1000000000000) << 19);        }
         else if (ins == "bge")
         {
-            regex ex(REG3);
+            regex ex(BRANCH);
             smatch M;
             regex_search(inst.Text, M, ex);
-
-
-        }
+            inst.rs1    = (unsigned int)stoi(M[2]);
+            inst.rs2    = (unsigned int)stoi(M[3]);
+            inst.J_label  = M[4];
+            // inst.B_imm  = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b101;
+            inst.opcode = 0b1100011;
+            inst.MachineCode = inst.opcode | ((inst.B_imm & 0b0100000000000) >> 4) | ((inst.B_imm & 0b0000000011110) << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.B_imm & 0b0011111100000) << 20) | ((inst.B_imm & 0b1000000000000) << 19);        }
         else if (ins == "bgeu")
         {
-            regex ex(REG3);
+            regex ex(BRANCH);
             smatch M;
             regex_search(inst.Text, M, ex);
-
-
-        }
+            inst.rs1    = (unsigned int)stoi(M[2]);
+            inst.rs2    = (unsigned int)stoi(M[3]);
+            inst.J_label  = M[4];
+            // inst.B_imm  = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b111;
+            inst.opcode = 0b1100011;
+            inst.MachineCode = inst.opcode | ((inst.B_imm & 0b0100000000000) >> 4) | ((inst.B_imm & 0b0000000011110) << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.B_imm & 0b0011111100000) << 20) | ((inst.B_imm & 0b1000000000000) << 19);        }
         //UJ
         else if (ins == "jal")
         {
-            regex ex(REG3);
+            regex ex(JAL1);
             smatch M;
             regex_search(inst.Text, M, ex);
-
-
+            inst.rd    = (unsigned int)stoi(M[2]);
+            inst.J_label  = M[3];
+            // inst.J_imm =
+            inst.opcode = 0b1101111;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.J_imm & 0b011111111000000000000)
+                            | ((inst.J_imm & 0b000000000100000000000) << 9)
+                            | ((inst.J_imm & 0b000000000011111111110) << 20)
+                            | ((inst.J_imm & 0b100000000000000000000) << 11);
         }
         //I
         else if (ins == "jalr")
         {
-            regex ex(REG3);
+            regex ex(REG2);
             smatch M;
             regex_search(inst.Text, M, ex);
-
-
+            inst.rd    = (unsigned int)stoi(M[2]);
+            inst.rs1    = (unsigned int)stoi(M[3]);
+            inst.I_imm  = (unsigned int)stoi(M[4]);
+            inst.funct3 = 0b000;
+            inst.opcode = 0b1100111;
+            inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
+                               (inst.rs1 << 15) | (inst.I_imm << 20);
         }
         else
         {
             //UNKOWN
+            inst.known = false;
         }
     }
     else
     {
         // LABEL CODE
-        cout <<"LABEL";
+        inst.islabel = true;
+        cout << ins << endl;
     }
 }
