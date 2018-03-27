@@ -12,16 +12,19 @@ using namespace std;
 
 #define SPACE "\\s+"
 #define REG "\\s*x(\\d{1,2})"
-#define LABEL "(\\w+:?)"
+#define LABEL "(\\w+):?"
 #define JLABEL "^(\\w+):$"
 #define IMM "\\s*([-|+]?\\d+|0x\\d+)"
+#define NEG "^-"
 #define OR "|"
+#define HEX "^0x\\d+$"
+#define DEC "^\\d+$"
 #define REG1    LABEL SPACE REG "," IMM
 #define REG2    LABEL SPACE REG "," REG "," IMM
 #define REG3    LABEL SPACE REG "," REG "," REG
 #define REGi    LABEL SPACE REG "," IMM "\\(" REG "\\)"
 #define JAL1    LABEL SPACE REG ",\\s*" LABEL
-#define BRANCH    LABEL SPACE REG "," REG ",\\s*" LABEL
+#define BRANCH  LABEL SPACE REG "," REG ",\\s*" LABEL
 // #define MYEX        REG3 OR REGi OR REG1 OR REG2
 
 struct instWord
@@ -31,7 +34,7 @@ struct instWord
     unsigned int rd, rs1, rs2, funct3, funct7, opcode;
     unsigned int I_imm, S_imm, B_imm, U_imm, J_imm;
     string J_label;
-    bool known = true, islabel = false;
+    bool known = true, islabel = false, pos = true;
 };
 int regs[32]={0}; //register simulation
 unsigned int pc = 0x0; //program counter
@@ -49,13 +52,15 @@ void Utype (instWord& inst);
 bool ecall (instWord& inst);
 void parse (instWord& inst);
 
+unordered_map <string, int> map;
+
 int main()
 {
     ifstream inFile;
     ofstream outFile;
     instWord W;
 
-    outFile.open("output.txt",ios::app);
+    outFile.open("output.txt", ios::app);
     inFile.open("div.txt");
     if(inFile.is_open())
     {
@@ -63,7 +68,6 @@ int main()
         string s;
         smatch m;
         regex lbl(JLABEL);
-        unordered_map <string, int> map;
         // go through file to find labels
         while(!inFile.eof())
         {
@@ -662,7 +666,22 @@ void parse (instWord& inst)
             regex_search(inst.Text, M, ex);
             inst.rd     = (unsigned int)stoi(M[2]);
             inst.rs1    = (unsigned int)stoi(M[3]);
-            inst.I_imm  = (unsigned int)stoi(M[4]);
+            string s = M[4];
+            regex dec(DEC);
+            regex hex(HEX);
+            regex neg(NEG);
+            if(regex_match(s, dec))
+            {
+                if(!regex_match(s, neg))
+                inst.I_imm  = (unsigned int)stoi(s);
+                else
+                {
+                    inst.I_imm  = -1*stoi(s);
+                    inst.pos = false;
+                }
+            }
+            else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
+            else {inst.known = false; return;}
             inst.funct3 = 0b000;
             inst.opcode = 0b0010011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
@@ -675,7 +694,22 @@ void parse (instWord& inst)
             regex_search(inst.Text, M, ex);
             inst.rd     = (unsigned int)stoi(M[2]);
             inst.rs1    = (unsigned int)stoi(M[3]);
-            inst.I_imm  = (unsigned int)stoi(M[4]);
+            string s = M[4];
+            regex dec(DEC);
+            regex hex(HEX);
+            regex neg(NEG);
+            if(regex_match(s, dec))
+            {
+                if(!regex_match(s, neg))
+                inst.I_imm  = (unsigned int)stoi(s);
+                else
+                {
+                    inst.I_imm  = -1*stoi(s);
+                    inst.pos = false;
+                }
+            }
+            else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
+            else {inst.known = false; return;}
             inst.funct3 = 0b001;
             inst.opcode = 0b0010011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
@@ -688,7 +722,22 @@ void parse (instWord& inst)
             regex_search(inst.Text, M, ex);
             inst.rd     = (unsigned int)stoi(M[2]);
             inst.rs1    = (unsigned int)stoi(M[3]);
-            inst.I_imm  = (unsigned int)stoi(M[4]);
+            string s = M[4];
+            regex dec(DEC);
+            regex hex(HEX);
+            regex neg(NEG);
+            if(regex_match(s, dec))
+            {
+                if(!regex_match(s, neg))
+                inst.I_imm  = (unsigned int)stoi(s);
+                else
+                {
+                    inst.I_imm  = -1*stoi(s);
+                    inst.pos = false;
+                }
+            }
+            else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
+            else {inst.known = false; return;}
             inst.funct3 = 0b101;
             inst.opcode = 0b0010011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
@@ -701,7 +750,22 @@ void parse (instWord& inst)
             regex_search(inst.Text, M, ex);
             inst.rd     = (unsigned int)stoi(M[2]);
             inst.rs1    = (unsigned int)stoi(M[3]);
-            inst.I_imm  = ((0b010000000000) | (unsigned int)stoi(M[4]));
+            string s = M[4];
+            regex dec(DEC);
+            regex hex(HEX);
+            regex neg(NEG);
+            if(regex_match(s, dec))
+            {
+                if(!regex_match(s, neg))
+                inst.I_imm  = (unsigned int)stoi(s);
+                else
+                {
+                    inst.I_imm  = -1*stoi(s);
+                    inst.pos = false;
+                }
+            }
+            else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
+            else {inst.known = false; return;}
             inst.funct3 = 0b101;
             inst.opcode = 0b0010011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
@@ -714,7 +778,22 @@ void parse (instWord& inst)
             regex_search(inst.Text, M, ex);
             inst.rd     = (unsigned int)stoi(M[2]);
             inst.rs1    = (unsigned int)stoi(M[3]);
-            inst.I_imm  = (unsigned int)stoi(M[4]);
+            string s = M[4];
+            regex dec(DEC);
+            regex hex(HEX);
+            regex neg(NEG);
+            if(regex_match(s, dec))
+            {
+                if(!regex_match(s, neg))
+                inst.I_imm  = (unsigned int)stoi(s);
+                else
+                {
+                    inst.I_imm  = -1*stoi(s);
+                    inst.pos = false;
+                }
+            }
+            else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
+            else {inst.known = false; return;}
             inst.funct3 = 0b111;
             inst.opcode = 0b0010011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
@@ -727,7 +806,22 @@ void parse (instWord& inst)
             regex_search(inst.Text, M, ex);
             inst.rd     = (unsigned int)stoi(M[2]);
             inst.rs1    = (unsigned int)stoi(M[3]);
-            inst.I_imm  = (unsigned int)stoi(M[4]);
+            string s = M[4];
+            regex dec(DEC);
+            regex hex(HEX);
+            regex neg(NEG);
+            if(regex_match(s, dec))
+            {
+                if(!regex_match(s, neg))
+                inst.I_imm  = (unsigned int)stoi(s);
+                else
+                {
+                    inst.I_imm  = -1*stoi(s);
+                    inst.pos = false;
+                }
+            }
+            else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
+            else {inst.known = false; return;}
             inst.funct3 = 0b110;
             inst.opcode = 0b0010011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
@@ -740,7 +834,22 @@ void parse (instWord& inst)
             regex_search(inst.Text, M, ex);
             inst.rd     = (unsigned int)stoi(M[2]);
             inst.rs1    = (unsigned int)stoi(M[3]);
-            inst.I_imm  = (unsigned int)stoi(M[4]);
+            string s = M[4];
+            regex dec(DEC);
+            regex hex(HEX);
+            regex neg(NEG);
+            if(regex_match(s, dec))
+            {
+                if(!regex_match(s, neg))
+                inst.I_imm  = (unsigned int)stoi(s);
+                else
+                {
+                    inst.I_imm  = -1*stoi(s);
+                    inst.pos = false;
+                }
+            }
+            else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
+            else {inst.known = false; return;}
             inst.funct3 = 0b100;
             inst.opcode = 0b0010011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
@@ -753,7 +862,22 @@ void parse (instWord& inst)
             regex_search(inst.Text, M, ex);
             inst.rd     = (unsigned int)stoi(M[2]);
             inst.rs1    = (unsigned int)stoi(M[3]);
-            inst.I_imm  = (unsigned int)stoi(M[4]);
+            string s = M[4];
+            regex dec(DEC);
+            regex hex(HEX);
+            regex neg(NEG);
+            if(regex_match(s, dec))
+            {
+                if(!regex_match(s, neg))
+                inst.I_imm  = (unsigned int)stoi(s);
+                else
+                {
+                    inst.I_imm  = -1*stoi(s);
+                    inst.pos = false;
+                }
+            }
+            else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
+            else {inst.known = false; return;}
             inst.funct3 = 0b010;
             inst.opcode = 0b0010011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
@@ -766,7 +890,22 @@ void parse (instWord& inst)
             regex_search(inst.Text, M, ex);
             inst.rd     = (unsigned int)stoi(M[2]);
             inst.rs1    = (unsigned int)stoi(M[3]);
-            inst.I_imm  = (unsigned int)stoi(M[4]);
+            string s = M[4];
+            regex dec(DEC);
+            regex hex(HEX);
+            regex neg(NEG);
+            if(regex_match(s, dec))
+            {
+                if(!regex_match(s, neg))
+                inst.I_imm  = (unsigned int)stoi(s);
+                else
+                {
+                    inst.I_imm  = -1*stoi(s);
+                    inst.pos = false;
+                }
+            }
+            else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
+            else {inst.known = false; return;}
             inst.funct3 = 0b011;
             inst.opcode = 0b0010011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
@@ -779,7 +918,22 @@ void parse (instWord& inst)
             smatch M;
             regex_search(inst.Text, M, ex);
             inst.rd     = (unsigned int)stoi(M[2]);
-            inst.U_imm  = (unsigned int)stoi(M[3]);
+            string s = M[3];
+            regex dec(DEC);
+            regex hex(HEX);
+            regex neg(NEG);
+            if(regex_match(s, dec))
+            {
+                if(!regex_match(s, neg))
+                inst.U_imm  = (unsigned int)stoi(s);
+                else
+                {
+                    inst.U_imm  = -1*stoi(s);
+                    inst.pos = false;
+                }
+            }
+            else if(regex_match(s, hex)) inst.U_imm  = (unsigned int)stoi(s, nullptr, 16);
+            else {inst.known = false; return;}
             inst.opcode = 0b0110111;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.U_imm << 12);
         }
@@ -789,7 +943,22 @@ void parse (instWord& inst)
             smatch M;
             regex_search(inst.Text, M, ex);
             inst.rd     = (unsigned int)stoi(M[2]);
-            inst.U_imm  = (unsigned int)stoi(M[3]);
+            string s = M[3];
+            regex dec(DEC);
+            regex hex(HEX);
+            regex neg(NEG);
+            if(regex_match(s, dec))
+            {
+                if(!regex_match(s, neg))
+                inst.U_imm  = (unsigned int)stoi(s);
+                else
+                {
+                    inst.U_imm  = -1*stoi(s);
+                    inst.pos = false;
+                }
+            }
+            else if(regex_match(s, hex)) inst.U_imm  = (unsigned int)stoi(s, nullptr, 16);
+            else {inst.known = false; return;}
             inst.opcode = 0b0010111;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.U_imm << 12);
         }
@@ -801,7 +970,22 @@ void parse (instWord& inst)
             regex_search(inst.Text, M, ex);
             inst.rd     = (unsigned int)stoi(M[2]);
             inst.rs1    = (unsigned int)stoi(M[4]);
-            inst.I_imm    = (unsigned int)stoi(M[3]);
+            string s = M[3];
+            regex dec(DEC);
+            regex hex(HEX);
+            regex neg(NEG);
+            if(regex_match(s, dec))
+            {
+                if(!regex_match(s, neg))
+                inst.I_imm  = (unsigned int)stoi(s);
+                else
+                {
+                    inst.I_imm  = -1*stoi(s);
+                    inst.pos = false;
+                }
+            }
+            else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
+            else {inst.known = false; return;}
             inst.funct3 = 0b000;
             inst.opcode = 0b0000011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
@@ -815,7 +999,22 @@ void parse (instWord& inst)
             regex_search(inst.Text, M, ex);
             inst.rd     = (unsigned int)stoi(M[2]);
             inst.rs1    = (unsigned int)stoi(M[4]);
-            inst.I_imm    = (unsigned int)stoi(M[3]);
+            string s = M[3];
+            regex dec(DEC);
+            regex hex(HEX);
+            regex neg(NEG);
+            if(regex_match(s, dec))
+            {
+                if(!regex_match(s, neg))
+                inst.I_imm  = (unsigned int)stoi(s);
+                else
+                {
+                    inst.I_imm  = -1*stoi(s);
+                    inst.pos = false;
+                }
+            }
+            else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
+            else {inst.known = false; return;}
             inst.funct3 = 0b100;
             inst.opcode = 0b0000011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
@@ -829,7 +1028,22 @@ void parse (instWord& inst)
             regex_search(inst.Text, M, ex);
             inst.rd     = (unsigned int)stoi(M[2]);
             inst.rs1    = (unsigned int)stoi(M[4]);
-            inst.I_imm    = (unsigned int)stoi(M[3]);
+            string s = M[3];
+            regex dec(DEC);
+            regex hex(HEX);
+            regex neg(NEG);
+            if(regex_match(s, dec))
+            {
+                if(!regex_match(s, neg))
+                inst.I_imm  = (unsigned int)stoi(s);
+                else
+                {
+                    inst.I_imm  = -1*stoi(s);
+                    inst.pos = false;
+                }
+            }
+            else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
+            else {inst.known = false; return;}
             inst.funct3 = 0b001;
             inst.opcode = 0b0000011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
@@ -843,7 +1057,22 @@ void parse (instWord& inst)
             regex_search(inst.Text, M, ex);
             inst.rd     = (unsigned int)stoi(M[2]);
             inst.rs1    = (unsigned int)stoi(M[4]);
-            inst.I_imm    = (unsigned int)stoi(M[3]);
+            string s = M[3];
+            regex dec(DEC);
+            regex hex(HEX);
+            regex neg(NEG);
+            if(regex_match(s, dec))
+            {
+                if(!regex_match(s, neg))
+                inst.I_imm  = (unsigned int)stoi(s);
+                else
+                {
+                    inst.I_imm  = -1*stoi(s);
+                    inst.pos = false;
+                }
+            }
+            else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
+            else {inst.known = false; return;}
             inst.funct3 = 0b101;
             inst.opcode = 0b0000011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
@@ -857,7 +1086,22 @@ void parse (instWord& inst)
             regex_search(inst.Text, M, ex);
             inst.rd     = (unsigned int)stoi(M[2]);
             inst.rs1    = (unsigned int)stoi(M[4]);
-            inst.I_imm    = (unsigned int)stoi(M[3]);
+            string s = M[3];
+            regex dec(DEC);
+            regex hex(HEX);
+            regex neg(NEG);
+            if(regex_match(s, dec))
+            {
+                if(!regex_match(s, neg))
+                inst.I_imm  = (unsigned int)stoi(s);
+                else
+                {
+                    inst.I_imm  = -1*stoi(s);
+                    inst.pos = false;
+                }
+            }
+            else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
+            else {inst.known = false; return;}
             inst.funct3 = 0b010;
             inst.opcode = 0b0000011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
@@ -871,7 +1115,22 @@ void parse (instWord& inst)
             regex_search(inst.Text, M, ex);
             inst.rs2     = (unsigned int)stoi(M[2]);
             inst.rs1    = (unsigned int)stoi(M[4]);
-            inst.S_imm    = (unsigned int)stoi(M[3]);
+            string s = M[3];
+            regex dec(DEC);
+            regex hex(HEX);
+            regex neg(NEG);
+            if(regex_match(s, dec))
+            {
+                if(!regex_match(s, neg))
+                inst.S_imm  = (unsigned int)stoi(s);
+                else
+                {
+                    inst.S_imm  = -1*stoi(s);
+                    inst.pos = false;
+                }
+            }
+            else if(regex_match(s, hex)) inst.S_imm  = (unsigned int)stoi(s, nullptr, 16);
+            else {inst.known = false; return;}
             inst.funct3 = 0b000;
             inst.opcode = 0b0100011;
             inst.MachineCode = inst.opcode | ((inst.S_imm & 0b000000011111) << 7) | (inst.funct3 << 12) |
@@ -884,7 +1143,22 @@ void parse (instWord& inst)
             regex_search(inst.Text, M, ex);
             inst.rs2     = (unsigned int)stoi(M[2]);
             inst.rs1    = (unsigned int)stoi(M[4]);
-            inst.S_imm    = (unsigned int)stoi(M[3]);
+            string s = M[3];
+            regex dec(DEC);
+            regex hex(HEX);
+            regex neg(NEG);
+            if(regex_match(s, dec))
+            {
+                if(!regex_match(s, neg))
+                inst.S_imm  = (unsigned int)stoi(s);
+                else
+                {
+                    inst.S_imm  = -1*stoi(s);
+                    inst.pos = false;
+                }
+            }
+            else if(regex_match(s, hex)) inst.S_imm  = (unsigned int)stoi(s, nullptr, 16);
+            else {inst.known = false; return;}
             inst.funct3 = 0b001;
             inst.opcode = 0b0100011;
             inst.MachineCode = inst.opcode | ((inst.S_imm & 0b000000011111) << 7) | (inst.funct3 << 12) |
@@ -897,7 +1171,22 @@ void parse (instWord& inst)
             regex_search(inst.Text, M, ex);
             inst.rs2     = (unsigned int)stoi(M[2]);
             inst.rs1    = (unsigned int)stoi(M[4]);
-            inst.S_imm    = (unsigned int)stoi(M[3]);
+            string s = M[3];
+            regex dec(DEC);
+            regex hex(HEX);
+            regex neg(NEG);
+            if(regex_match(s, dec))
+            {
+                if(!regex_match(s, neg))
+                inst.S_imm  = (unsigned int)stoi(s);
+                else
+                {
+                    inst.S_imm  = -1*stoi(s);
+                    inst.pos = false;
+                }
+            }
+            else if(regex_match(s, hex)) inst.S_imm  = (unsigned int)stoi(s, nullptr, 16);
+            else {inst.known = false; return;}
             inst.funct3 = 0b010;
             inst.opcode = 0b0100011;
             inst.MachineCode = inst.opcode | ((inst.S_imm & 0b000000011111) << 7) | (inst.funct3 << 12) |
@@ -1020,6 +1309,7 @@ void parse (instWord& inst)
         {
             //UNKOWN
             inst.known = false;
+            return;
         }
     }
     else
