@@ -59,13 +59,13 @@ int main()
     ifstream inFile;
     ofstream outFile;
     instWord W;
-<<<<<<< HEAD
-
+    <<<<<<< HEAD
+    
     outFile.open("output.txt", ios::app);
-=======
+    =======
     
     outFile.open("output.txt",ios::app);
->>>>>>> 247a7df21aba833cfafb51b6997807806ea772bc
+    >>>>>>> 247a7df21aba833cfafb51b6997807806ea772bc
     inFile.open("div.txt");
     if(inFile.is_open())
     {
@@ -245,6 +245,7 @@ void Stype (instWord& inst)
 //Function to execute I instructions
 void Itype(instWord& inst)
 {
+    int imm =  inst.I_imm;
     switch (inst.opcode)
     {
         case 0x13:
@@ -254,7 +255,7 @@ void Itype(instWord& inst)
                     //addi
                 case 0:
                 {
-                    regs[inst.rd] = regs[inst.rs1] + (inst.I_imm);
+                    regs[inst.rd] = regs[inst.rs1] + imm;
                 }
                     break;
                     //slli
@@ -265,13 +266,20 @@ void Itype(instWord& inst)
                 }
                     break;
                     //slti
-                case 2: regs[inst.rd] = (regs[inst.rs1] < int(inst.I_imm));
+                case 2:
+                {
+                    regs[inst.rd] = (regs[inst.rs1] < imm);
+                }
                     break;
                     //sltiu
-                case 3: regs[inst.rd] = ( (unsigned int) regs[inst.rs1] < ((unsigned int)inst.I_imm) );
+                case 3:
+                    regs[inst.rd] = ( (unsigned int) regs[inst.rs1] < ((unsigned int)inst.I_imm) );
                     break;
                     //xori
-                case 4: regs[inst.rd] = regs[inst.rs1] ^ (inst.I_imm);
+                case 4:
+                {
+                    regs[inst.rd] = regs[inst.rs1] ^ imm;
+                }
                     break;
                     //sra & srl
                 case 5:
@@ -285,10 +293,16 @@ void Itype(instWord& inst)
                 }
                     break;
                     //ori
-                case 6:  regs[inst.rd] = regs[inst.rs1] | (inst.I_imm);
+                case 6:
+                {
+                    regs[inst.rd] = regs[inst.rs1] | imm;
+                }
                     break;
                     //andi
-                case 7: regs[inst.rd] = regs[inst.rs1] & (inst.I_imm);
+                case 7:
+                {
+                    regs[inst.rd] = regs[inst.rs1] & imm;
+                }
                     break;
                 default:
                     cout << "\tUnknown I Instruction \n";
@@ -301,13 +315,15 @@ void Itype(instWord& inst)
             {
                     //lb
                 case 0:
-                    regs[inst.rd] = memory[regs[inst.rs1] + inst.I_imm];
+                {
+                    regs[inst.rd] = memory[regs[inst.rs1] + imm];
+                }
                     break;
                     //lh
                 case 1:
                 {
-                    int x = memory[regs[inst.rs1] + inst.I_imm] << 8;
-                    int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1];
+                    int x = memory[regs[inst.rs1] + imm] << 8;
+                    int y = (unsigned int) memory[regs[inst.rs1] + imm + 1];
                     
                     regs[inst.rd] = x + y;
                 }
@@ -315,22 +331,22 @@ void Itype(instWord& inst)
                     //lw
                 case 2:
                 {
-                    int x = memory[regs[inst.rs1] + inst.I_imm] << 24;
-                    int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1] << 16;
-                    int z = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+2] << 8;
-                    int t = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+3];
+                    int x = memory[regs[inst.rs1] + imm] << 24;
+                    int y = (unsigned int) memory[regs[inst.rs1] + imm+1] << 16;
+                    int z = (unsigned int) memory[regs[inst.rs1] + imm+2] << 8;
+                    int t = (unsigned int) memory[regs[inst.rs1] + imm+3];
                     regs[inst.rd] = x + y + z + t;
                 }
                     break;
                     //lbu
                 case 4:
-                    regs[inst.rd] = (unsigned int) memory[regs[inst.rs1] + inst.I_imm];
+                    regs[inst.rd] = (unsigned int) memory[regs[inst.rs1] + imm];
                     break;
                     //lhu
                 case 5:
                 {
-                    int x = (unsigned int) memory[regs[inst.rs1] + inst.I_imm] << 8;
-                    int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1];
+                    int x = (unsigned int) memory[regs[inst.rs1] + imm] << 8;
+                    int y = (unsigned int) memory[regs[inst.rs1] + imm+1];
                     
                     regs[inst.rd] = x + y;
                 }
@@ -340,10 +356,11 @@ void Itype(instWord& inst)
             }
         }
             break;
+            //jalr
         case 0x67:
         {
             inst.rd = pc + 4;
-            pc = inst.rs1 + inst.I_imm;
+            pc = inst.rs1 + imm;
             pc = pc & 0xfffffffe;
         }
     }
@@ -459,13 +476,14 @@ void UJtype (instWord& inst)
 //function to execute U instructions
 void Utype (instWord& inst)
 {
+    int imm = inst.U_imm;
     switch (inst.opcode)
     {
             //lui
-        case 0x37: regs[inst.rd] = inst.U_imm;
+        case 0x37: regs[inst.rd] = imm;
             break;
             //auipc
-        case 0x17: regs[inst.rd] = pc + inst.U_imm;
+        case 0x17: regs[inst.rd] = pc + imm;
             break;
     }
 }
@@ -696,7 +714,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 if(!regex_match(s, neg))
-                inst.I_imm  = (unsigned int)stoi(s);
+                    inst.I_imm  = (unsigned int)stoi(s);
                 else
                 {
                     inst.I_imm  = -1*stoi(s);
@@ -724,7 +742,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 if(!regex_match(s, neg))
-                inst.I_imm  = (unsigned int)stoi(s);
+                    inst.I_imm  = (unsigned int)stoi(s);
                 else
                 {
                     inst.I_imm  = -1*stoi(s);
@@ -752,7 +770,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 if(!regex_match(s, neg))
-                inst.I_imm  = (unsigned int)stoi(s);
+                    inst.I_imm  = (unsigned int)stoi(s);
                 else
                 {
                     inst.I_imm  = -1*stoi(s);
@@ -780,7 +798,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 if(!regex_match(s, neg))
-                inst.I_imm  = (unsigned int)stoi(s);
+                    inst.I_imm  = (unsigned int)stoi(s);
                 else
                 {
                     inst.I_imm  = -1*stoi(s);
@@ -808,7 +826,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 if(!regex_match(s, neg))
-                inst.I_imm  = (unsigned int)stoi(s);
+                    inst.I_imm  = (unsigned int)stoi(s);
                 else
                 {
                     inst.I_imm  = -1*stoi(s);
@@ -836,7 +854,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 if(!regex_match(s, neg))
-                inst.I_imm  = (unsigned int)stoi(s);
+                    inst.I_imm  = (unsigned int)stoi(s);
                 else
                 {
                     inst.I_imm  = -1*stoi(s);
@@ -864,7 +882,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 if(!regex_match(s, neg))
-                inst.I_imm  = (unsigned int)stoi(s);
+                    inst.I_imm  = (unsigned int)stoi(s);
                 else
                 {
                     inst.I_imm  = -1*stoi(s);
@@ -892,7 +910,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 if(!regex_match(s, neg))
-                inst.I_imm  = (unsigned int)stoi(s);
+                    inst.I_imm  = (unsigned int)stoi(s);
                 else
                 {
                     inst.I_imm  = -1*stoi(s);
@@ -920,7 +938,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 if(!regex_match(s, neg))
-                inst.I_imm  = (unsigned int)stoi(s);
+                    inst.I_imm  = (unsigned int)stoi(s);
                 else
                 {
                     inst.I_imm  = -1*stoi(s);
@@ -948,7 +966,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 if(!regex_match(s, neg))
-                inst.U_imm  = (unsigned int)stoi(s);
+                    inst.U_imm  = (unsigned int)stoi(s);
                 else
                 {
                     inst.U_imm  = -1*stoi(s);
@@ -973,7 +991,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 if(!regex_match(s, neg))
-                inst.U_imm  = (unsigned int)stoi(s);
+                    inst.U_imm  = (unsigned int)stoi(s);
                 else
                 {
                     inst.U_imm  = -1*stoi(s);
@@ -1000,7 +1018,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 if(!regex_match(s, neg))
-                inst.I_imm  = (unsigned int)stoi(s);
+                    inst.I_imm  = (unsigned int)stoi(s);
                 else
                 {
                     inst.I_imm  = -1*stoi(s);
@@ -1029,7 +1047,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 if(!regex_match(s, neg))
-                inst.I_imm  = (unsigned int)stoi(s);
+                    inst.I_imm  = (unsigned int)stoi(s);
                 else
                 {
                     inst.I_imm  = -1*stoi(s);
@@ -1058,7 +1076,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 if(!regex_match(s, neg))
-                inst.I_imm  = (unsigned int)stoi(s);
+                    inst.I_imm  = (unsigned int)stoi(s);
                 else
                 {
                     inst.I_imm  = -1*stoi(s);
@@ -1087,7 +1105,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 if(!regex_match(s, neg))
-                inst.I_imm  = (unsigned int)stoi(s);
+                    inst.I_imm  = (unsigned int)stoi(s);
                 else
                 {
                     inst.I_imm  = -1*stoi(s);
@@ -1116,7 +1134,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 if(!regex_match(s, neg))
-                inst.I_imm  = (unsigned int)stoi(s);
+                    inst.I_imm  = (unsigned int)stoi(s);
                 else
                 {
                     inst.I_imm  = -1*stoi(s);
@@ -1145,7 +1163,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 if(!regex_match(s, neg))
-                inst.S_imm  = (unsigned int)stoi(s);
+                    inst.S_imm  = (unsigned int)stoi(s);
                 else
                 {
                     inst.S_imm  = -1*stoi(s);
@@ -1173,7 +1191,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 if(!regex_match(s, neg))
-                inst.S_imm  = (unsigned int)stoi(s);
+                    inst.S_imm  = (unsigned int)stoi(s);
                 else
                 {
                     inst.S_imm  = -1*stoi(s);
@@ -1201,7 +1219,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 if(!regex_match(s, neg))
-                inst.S_imm  = (unsigned int)stoi(s);
+                    inst.S_imm  = (unsigned int)stoi(s);
                 else
                 {
                     inst.S_imm  = -1*stoi(s);
@@ -1342,4 +1360,5 @@ void parse (instWord& inst)
         cout << ins << endl;
     }
 }
+
 
