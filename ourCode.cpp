@@ -59,7 +59,7 @@ int main()
     ifstream inFile;
     ofstream outFile;
     instWord W;
-    
+
     outFile.open("output.txt", ios::app);
     inFile.open("div.txt");
     if(inFile.is_open())
@@ -79,10 +79,10 @@ int main()
             }
             i++;
         }
-        
+
         inFile.clear();
         inFile.seekg(0, ios::beg);
-        
+
         pc = 0x0;
         while(!inFile.eof())
         {
@@ -115,7 +115,7 @@ int main()
             }
             pc+=4;
         }
-        
+
         inFile.close();
         outFile.close();
         // print out the registers values
@@ -203,9 +203,9 @@ bool instAssembleExec(instWord&inst)
             cout << "unsupported instruction\n";
             return false;
         }
-            
+
     }
-    
+
 }
 
 //function to execute S type
@@ -321,7 +321,7 @@ void Itype(instWord& inst)
                 {
                     int x = memory[regs[inst.rs1] + imm] << 8;
                     int y = (unsigned int) memory[regs[inst.rs1] + imm + 1];
-                    
+
                     regs[inst.rd] = x + y;
                 }
                     break;
@@ -344,7 +344,7 @@ void Itype(instWord& inst)
                 {
                     int x = (unsigned int) memory[regs[inst.rs1] + imm] << 8;
                     int y = (unsigned int) memory[regs[inst.rs1] + imm+1];
-                    
+
                     regs[inst.rd] = x + y;
                 }
                     break;
@@ -543,17 +543,11 @@ void parse (instWord& inst)
     smatch m;
     regex_search(inst.Text, m, ex);
     string ins = m[1];
-<<<<<<< HEAD
-
     regex jlbl(JLABEL);
     // smatch labelm;
 
     if(!(regex_match(ins, jlbl)))
-=======
-    regex ex1(".+:");
-    
-    if(!(regex_match(ins, ex1)))
->>>>>>> d5779b5dd73151b104b88026e5e80bd394b24126
+
     {
         //R
         if (ins == "add")
@@ -583,7 +577,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-            
+
         }
         else if (ins == "sll")
         {
@@ -598,7 +592,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-            
+
         }
         else if (ins == "srl")
         {
@@ -613,7 +607,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-            
+
         }
         else if (ins == "sra")
         {
@@ -628,7 +622,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-            
+
         }
         else if (ins == "and")
         {
@@ -643,7 +637,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-            
+
         }
         else if (ins == "or")
         {
@@ -658,7 +652,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-            
+
         }
         else if (ins == "xor")
         {
@@ -673,7 +667,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-            
+
         }
         else if (ins == "slt")
         {
@@ -688,7 +682,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-            
+
         }
         else if (ins == "sltu")
         {
@@ -703,7 +697,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-            
+
         }
         //I
         else if (ins == "addi")
@@ -977,7 +971,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0000011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.I_imm << 20);
-            
+
         }
         else if (ins == "lbu")
         {
@@ -1001,7 +995,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0000011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.I_imm << 20);
-            
+
         }
         else if (ins == "lh")
         {
@@ -1025,7 +1019,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0000011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.I_imm << 20);
-            
+
         }
         else if (ins == "lhu")
         {
@@ -1049,7 +1043,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0000011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.I_imm << 20);
-            
+
         }
         else if (ins == "lw")
         {
@@ -1304,4 +1298,3 @@ void parse (instWord& inst)
         // cout << ins << endl;
     }
 }
-
