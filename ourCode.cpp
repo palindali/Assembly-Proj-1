@@ -58,7 +58,7 @@ int main()
 {
     ifstream inFile;
     ofstream outFile;
-    instWord W;
+    //instWord W;
 
     outFile.open("output.txt", ios::app);
     inFile.open("div.s");
@@ -86,6 +86,7 @@ int main()
         pc = 0x0;
         while(!inFile.eof())
         {
+            instWord W;
             getline (inFile, W.Text);
             parse(W);        //parse Text into its instruction format fields
             //Generate instruction machine code and execute instruction
@@ -103,6 +104,7 @@ int main()
         inFile.seekg(0, ios::beg);
         while(!inFile.eof())
         {
+            instWord W;
             getline (inFile, W.Text);
             parse(W);
             if (instAssembleExec(W)) //execute instructions. return 0 if code for termination and ecall are detected
