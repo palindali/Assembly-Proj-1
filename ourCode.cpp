@@ -59,7 +59,7 @@ int main()
     ifstream inFile;
     ofstream outFile;
     instWord W;
-
+    
     outFile.open("output.txt", ios::app);
     inFile.open("div.txt");
     if(inFile.is_open())
@@ -79,10 +79,10 @@ int main()
             }
             i++;
         }
-
+        
         inFile.clear();
         inFile.seekg(0, ios::beg);
-
+        
         pc = 0x0;
         while(!inFile.eof())
         {
@@ -115,7 +115,7 @@ int main()
             }
             pc+=4;
         }
-
+        
         inFile.close();
         outFile.close();
         // print out the registers values
@@ -131,6 +131,7 @@ void printPrefix(unsigned int instA, unsigned int instCode)
 {
     cout << "0x" << hex << setfill('0') << setw(8) << instA << "\t0x" << hex << setw(8) << instCode;
 }
+
 
 
 //returns true only if x10=10/ code for program termination
@@ -202,34 +203,35 @@ bool instAssembleExec(instWord&inst)
             cout << "unsupported instruction\n";
             return false;
         }
-
+            
     }
-
+    
 }
 
 //function to execute S type
 void Stype (instWord& inst)
 {
+    int S_imm =  inst.S_imm;
     switch (inst.funct3)
     {
             //sb
         case 0:
         {
             int t = inst.rs2 & 0x000000ff;
-            memory[inst.rs1 + inst.S_imm] = t;
+            memory[inst.rs1 + S_imm] = t;
         }
             break;
             //sh
         case 1:
         {
             int t = inst.rs2 & 0x0000ffff;
-            memory[inst.rs1 + inst.S_imm] = t;
+            memory[inst.rs1 + S_imm] = t;
         }
             break;
             //sw
         case 2:
         {
-            memory[inst.rs1 + inst.S_imm] = inst.rs2;
+            memory[inst.rs1 + S_imm] = inst.rs2;
         }
             break;
         default:
@@ -240,6 +242,7 @@ void Stype (instWord& inst)
 //Function to execute I instructions
 void Itype(instWord& inst)
 {
+    int imm =  inst.I_imm;
     switch (inst.opcode)
     {
         case 0x13:
@@ -249,7 +252,7 @@ void Itype(instWord& inst)
                     //addi
                 case 0:
                 {
-                    regs[inst.rd] = regs[inst.rs1] + (inst.I_imm);
+                    regs[inst.rd] = regs[inst.rs1] + imm;
                 }
                     break;
                     //slli
@@ -260,13 +263,20 @@ void Itype(instWord& inst)
                 }
                     break;
                     //slti
-                case 2: regs[inst.rd] = (regs[inst.rs1] < int(inst.I_imm));
+                case 2:
+                {
+                    regs[inst.rd] = (regs[inst.rs1] < imm);
+                }
                     break;
                     //sltiu
-                case 3: regs[inst.rd] = ( (unsigned int) regs[inst.rs1] < ((unsigned int)inst.I_imm) );
+                case 3:
+                    regs[inst.rd] = ( (unsigned int) regs[inst.rs1] < ((unsigned int)inst.I_imm) );
                     break;
                     //xori
-                case 4: regs[inst.rd] = regs[inst.rs1] ^ (inst.I_imm);
+                case 4:
+                {
+                    regs[inst.rd] = regs[inst.rs1] ^ imm;
+                }
                     break;
                     //sra & srl
                 case 5:
@@ -280,10 +290,16 @@ void Itype(instWord& inst)
                 }
                     break;
                     //ori
-                case 6:  regs[inst.rd] = regs[inst.rs1] | (inst.I_imm);
+                case 6:
+                {
+                    regs[inst.rd] = regs[inst.rs1] | imm;
+                }
                     break;
                     //andi
-                case 7: regs[inst.rd] = regs[inst.rs1] & (inst.I_imm);
+                case 7:
+                {
+                    regs[inst.rd] = regs[inst.rs1] & imm;
+                }
                     break;
                 default:
                     cout << "\tUnknown I Instruction \n";
@@ -296,37 +312,39 @@ void Itype(instWord& inst)
             {
                     //lb
                 case 0:
-                    regs[inst.rd] = memory[regs[inst.rs1] + inst.I_imm];
+                {
+                    regs[inst.rd] = memory[regs[inst.rs1] + imm];
+                }
                     break;
                     //lh
                 case 1:
                 {
-                    int x = memory[regs[inst.rs1] + inst.I_imm] << 8;
-                    int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1];
-
+                    int x = memory[regs[inst.rs1] + imm] << 8;
+                    int y = (unsigned int) memory[regs[inst.rs1] + imm + 1];
+                    
                     regs[inst.rd] = x + y;
                 }
                     break;
                     //lw
                 case 2:
                 {
-                    int x = memory[regs[inst.rs1] + inst.I_imm] << 24;
-                    int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1] << 16;
-                    int z = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+2] << 8;
-                    int t = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+3];
+                    int x = memory[regs[inst.rs1] + imm] << 24;
+                    int y = (unsigned int) memory[regs[inst.rs1] + imm+1] << 16;
+                    int z = (unsigned int) memory[regs[inst.rs1] + imm+2] << 8;
+                    int t = (unsigned int) memory[regs[inst.rs1] + imm+3];
                     regs[inst.rd] = x + y + z + t;
                 }
                     break;
                     //lbu
                 case 4:
-                    regs[inst.rd] = (unsigned int) memory[regs[inst.rs1] + inst.I_imm];
+                    regs[inst.rd] = (unsigned int) memory[regs[inst.rs1] + imm];
                     break;
                     //lhu
                 case 5:
                 {
-                    int x = (unsigned int) memory[regs[inst.rs1] + inst.I_imm] << 8;
-                    int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1];
-
+                    int x = (unsigned int) memory[regs[inst.rs1] + imm] << 8;
+                    int y = (unsigned int) memory[regs[inst.rs1] + imm+1];
+                    
                     regs[inst.rd] = x + y;
                 }
                     break;
@@ -335,10 +353,11 @@ void Itype(instWord& inst)
             }
         }
             break;
+            //jalr
         case 0x67:
         {
             inst.rd = pc + 4;
-            pc = inst.rs1 + inst.I_imm;
+            pc = inst.rs1 + imm;
             pc = pc & 0xfffffffe;
         }
     }
@@ -454,13 +473,14 @@ void UJtype (instWord& inst)
 //function to execute U instructions
 void Utype (instWord& inst)
 {
+    int imm = inst.U_imm;
     switch (inst.opcode)
     {
             //lui
-        case 0x37: regs[inst.rd] = inst.U_imm;
+        case 0x37: regs[inst.rd] = imm;
             break;
             //auipc
-        case 0x17: regs[inst.rd] = pc + inst.U_imm;
+        case 0x17: regs[inst.rd] = pc + imm;
             break;
     }
 }
@@ -501,6 +521,7 @@ bool ecall (instWord& inst)
     }
 }
 
+
 // unsigned int getfield(int& after, char beg, char end, string s)
 // {
 //     int x, i, k;
@@ -523,7 +544,7 @@ void parse (instWord& inst)
     regex_search(inst.Text, m, ex);
     string ins = m[1];
     regex ex1(".+:");
-
+    
     if(!(regex_match(ins, ex1)))
     {
         //R
@@ -554,7 +575,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+            
         }
         else if (ins == "sll")
         {
@@ -569,7 +590,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+            
         }
         else if (ins == "srl")
         {
@@ -584,7 +605,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+            
         }
         else if (ins == "sra")
         {
@@ -599,7 +620,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+            
         }
         else if (ins == "and")
         {
@@ -614,7 +635,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+            
         }
         else if (ins == "or")
         {
@@ -629,7 +650,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+            
         }
         else if (ins == "xor")
         {
@@ -644,7 +665,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+            
         }
         else if (ins == "slt")
         {
@@ -659,7 +680,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+            
         }
         else if (ins == "sltu")
         {
@@ -674,7 +695,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+            
         }
         //I
         else if (ins == "addi")
@@ -691,7 +712,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.I_imm  = ((unsigned int)stoi(s) & 0b111111111111);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -714,7 +735,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.I_imm  = ((unsigned int)stoi(s) & 0b111111111111);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -737,7 +758,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.I_imm  = ((unsigned int)stoi(s) & 0b111111111111);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -760,7 +781,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.I_imm  = ((unsigned int)stoi(s) & 0b111111111111);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -783,7 +804,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.I_imm  = ((unsigned int)stoi(s) & 0b111111111111);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -806,7 +827,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.I_imm  = ((unsigned int)stoi(s) & 0b111111111111);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -829,7 +850,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.I_imm  = ((unsigned int)stoi(s) & 0b111111111111);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -852,7 +873,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.I_imm  = ((unsigned int)stoi(s) & 0b111111111111);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -875,7 +896,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.I_imm  = ((unsigned int)stoi(s) & 0b111111111111);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -898,7 +919,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.S_imm  = ((unsigned int)stoi(s) & 0b11111111111111111111000000000000);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.U_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -918,7 +939,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.S_imm  = ((unsigned int)stoi(s) & 0b11111111111111111111000000000000);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.U_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -940,7 +961,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.I_imm  = ((unsigned int)stoi(s) & 0b111111111111);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -948,7 +969,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0000011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.I_imm << 20);
-
+            
         }
         else if (ins == "lbu")
         {
@@ -964,7 +985,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.I_imm  = ((unsigned int)stoi(s) & 0b111111111111);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -972,7 +993,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0000011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.I_imm << 20);
-
+            
         }
         else if (ins == "lh")
         {
@@ -988,7 +1009,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.I_imm  = ((unsigned int)stoi(s) & 0b111111111111);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -996,7 +1017,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0000011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.I_imm << 20);
-
+            
         }
         else if (ins == "lhu")
         {
@@ -1012,7 +1033,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.I_imm  = ((unsigned int)stoi(s) & 0b111111111111);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -1020,7 +1041,7 @@ void parse (instWord& inst)
             inst.opcode = 0b0000011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
             (inst.rs1 << 15) | (inst.I_imm << 20);
-
+            
         }
         else if (ins == "lw")
         {
@@ -1036,7 +1057,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.I_imm  = ((unsigned int)stoi(s) & 0b111111111111);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -1060,7 +1081,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.S_imm  = ((unsigned int)stoi(s) & 0b111111111111);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.S_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -1083,7 +1104,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.S_imm  = ((unsigned int)stoi(s) & 0b111111111111);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.S_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -1106,7 +1127,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.S_imm  = ((unsigned int)stoi(s) & 0b111111111111);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.S_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -1125,7 +1146,7 @@ void parse (instWord& inst)
             inst.rs2    = (unsigned int)stoi(M[3]);
             inst.J_label  = M[4];
             int line = 0;
-            if(map.count(inst.J_label)) line = map.at(inst.J_LABEL);
+            if(map.count(inst.J_label)) line = map.at(inst.J_label);
             else{inst.known = false; return;}
             inst.B_imm = (unsigned int)(line - pc/4);
             inst.funct3 = 0b000;
@@ -1227,7 +1248,7 @@ void parse (instWord& inst)
             if(regex_match(s, dec))
             {
                 inst.I_imm  = ((unsigned int)stoi(s) & 0b111111111111);
-                if(regex_match(s, neg)) int.pos false;
+                if(regex_match(s, neg)) inst.pos = false;
             }
             else if(regex_match(s, hex)) inst.I_imm  = (unsigned int)stoi(s, nullptr, 16);
             else {inst.known = false; return;}
@@ -1255,3 +1276,4 @@ void parse (instWord& inst)
         cout << ins << endl;
     }
 }
+
