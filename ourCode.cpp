@@ -22,7 +22,7 @@ using namespace std;
 #define REGi    LABEL SPACE REG "," IMM "\\(" REG "\\)"
 #define JAL1    LABEL SPACE REG ",\\s*" LABEL
 #define BRANCH    LABEL SPACE REG "," REG ",\\s*" LABEL
-// #define MYEX		REG3 OR REGi OR REG1 OR REG2
+// #define MYEX        REG3 OR REGi OR REG1 OR REG2
 
 struct instWord
 {
@@ -54,9 +54,9 @@ int main()
     ifstream inFile;
     ofstream outFile;
     instWord W;
-
+    
     outFile.open("output.txt",ios::app);
-    inFile.open("div.s");
+    inFile.open("div.txt");
     if(inFile.is_open())
     {
         int i = 0;
@@ -79,7 +79,7 @@ int main()
         while(!inFile.eof())
         {
             getline (inFile, W.Text);
-
+            
             parse(W);        //parse Text into its instruction format fields
             //Generate instruction machine code and execute instruction
             if (W.known)
@@ -88,17 +88,17 @@ int main()
                 {
                     return 0;
                 }
+                cout << "0x" << hex << setfill('0') << setw(8) << W.MachineCode << endl;
+                outFile << "0x" << hex << setfill('0') << setw(8) << W.MachineCode << endl;
             }
-
-            cout << "0x" << hex << setfill('0') << setw(8) << W.MachineCode << endl;
-            outFile << "0x" << hex << setfill('0') << setw(8) << W.MachineCode << endl;
+            
             //printPrefix(pc, W.MachineCode);
             //save machine code to an output file
             pc += 4;
         }
-
+        
         inFile.close();
-
+        
         // print out the registers values
         for(int i = 0; i < 32; i++)
             cout << "x" << dec << i << ": \t"<< "0x" << hex << setfill('0') << setw(8) << regs[i] << "\n";
@@ -182,9 +182,9 @@ bool instAssembleExec(instWord&inst)
             cout << "unsupported instruction\n";
             return false;
         }
-
+            
     }
-
+    
 }
 
 //function to execute S type
@@ -280,7 +280,7 @@ void Itype(instWord& inst)
                 {
                     int x = memory[regs[inst.rs1] + inst.I_imm] << 8;
                     int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1];
-
+                    
                     regs[inst.rd] = x + y;
                 }
                     break;
@@ -303,7 +303,7 @@ void Itype(instWord& inst)
                 {
                     int x = (unsigned int) memory[regs[inst.rs1] + inst.I_imm] << 8;
                     int y = (unsigned int) memory[regs[inst.rs1] + inst.I_imm+1];
-
+                    
                     regs[inst.rd] = x + y;
                 }
                     break;
@@ -500,7 +500,7 @@ void parse (instWord& inst)
     regex_search(inst.Text, m, ex);
     string ins = m[1];
     regex ex1(".+:");
-
+    
     if(!(regex_match(ins, ex1)))
     {
         //R
@@ -516,7 +516,7 @@ void parse (instWord& inst)
             inst.funct7 = 0b0000000;
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+            (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
         }
         else if (ins == "sub")
         {
@@ -530,8 +530,8 @@ void parse (instWord& inst)
             inst.funct7 = 0b0100000;
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+            (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+            
         }
         else if (ins == "sll")
         {
@@ -545,8 +545,8 @@ void parse (instWord& inst)
             inst.funct7 = 0b0000000;
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+            (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+            
         }
         else if (ins == "srl")
         {
@@ -560,8 +560,8 @@ void parse (instWord& inst)
             inst.funct7 = 0b0000000;
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+            (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+            
         }
         else if (ins == "sra")
         {
@@ -575,8 +575,8 @@ void parse (instWord& inst)
             inst.funct7 = 0b0100000;
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+            (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+            
         }
         else if (ins == "and")
         {
@@ -590,8 +590,8 @@ void parse (instWord& inst)
             inst.funct7 = 0b0000000;
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+            (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+            
         }
         else if (ins == "or")
         {
@@ -605,8 +605,8 @@ void parse (instWord& inst)
             inst.funct7 = 0b0000000;
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+            (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+            
         }
         else if (ins == "xor")
         {
@@ -620,8 +620,8 @@ void parse (instWord& inst)
             inst.funct7 = 0b0000000;
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+            (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+            
         }
         else if (ins == "slt")
         {
@@ -635,8 +635,8 @@ void parse (instWord& inst)
             inst.funct7 = 0b0000000;
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+            (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+            
         }
         else if (ins == "sltu")
         {
@@ -650,8 +650,8 @@ void parse (instWord& inst)
             inst.funct7 = 0b0000000;
             inst.opcode = 0b0110011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
-
+            (inst.rs1 << 15) | (inst.rs2 << 20) | (inst.funct7 << 25);
+            
         }
         //I
         else if (ins == "addi")
@@ -665,7 +665,7 @@ void parse (instWord& inst)
             inst.funct3 = 0b000;
             inst.opcode = 0b0010011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.I_imm << 20);
+            (inst.rs1 << 15) | (inst.I_imm << 20);
         }
         else if (ins == "slli")
         {
@@ -678,7 +678,7 @@ void parse (instWord& inst)
             inst.funct3 = 0b001;
             inst.opcode = 0b0010011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.I_imm << 20);
+            (inst.rs1 << 15) | (inst.I_imm << 20);
         }
         else if (ins == "srli")
         {
@@ -691,7 +691,7 @@ void parse (instWord& inst)
             inst.funct3 = 0b101;
             inst.opcode = 0b0010011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.I_imm << 20);
+            (inst.rs1 << 15) | (inst.I_imm << 20);
         }
         else if (ins == "srai")
         {
@@ -704,7 +704,7 @@ void parse (instWord& inst)
             inst.funct3 = 0b101;
             inst.opcode = 0b0010011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.I_imm << 20);
+            (inst.rs1 << 15) | (inst.I_imm << 20);
         }
         else if (ins == "andi")
         {
@@ -717,7 +717,7 @@ void parse (instWord& inst)
             inst.funct3 = 0b111;
             inst.opcode = 0b0010011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.I_imm << 20);
+            (inst.rs1 << 15) | (inst.I_imm << 20);
         }
         else if (ins == "ori")
         {
@@ -730,7 +730,7 @@ void parse (instWord& inst)
             inst.funct3 = 0b110;
             inst.opcode = 0b0010011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.I_imm << 20);
+            (inst.rs1 << 15) | (inst.I_imm << 20);
         }
         else if (ins == "xori")
         {
@@ -743,7 +743,7 @@ void parse (instWord& inst)
             inst.funct3 = 0b100;
             inst.opcode = 0b0010011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.I_imm << 20);
+            (inst.rs1 << 15) | (inst.I_imm << 20);
         }
         else if (ins == "slti")
         {
@@ -756,7 +756,7 @@ void parse (instWord& inst)
             inst.funct3 = 0b010;
             inst.opcode = 0b0010011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.I_imm << 20);
+            (inst.rs1 << 15) | (inst.I_imm << 20);
         }
         else if (ins == "sltiu")
         {
@@ -769,7 +769,7 @@ void parse (instWord& inst)
             inst.funct3 = 0b011;
             inst.opcode = 0b0010011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.I_imm << 20);
+            (inst.rs1 << 15) | (inst.I_imm << 20);
         }
         //U
         else if (ins == "lui")
@@ -804,8 +804,8 @@ void parse (instWord& inst)
             inst.funct3 = 0b000;
             inst.opcode = 0b0000011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.I_imm << 20);
-
+            (inst.rs1 << 15) | (inst.I_imm << 20);
+            
         }
         else if (ins == "lbu")
         {
@@ -818,8 +818,8 @@ void parse (instWord& inst)
             inst.funct3 = 0b100;
             inst.opcode = 0b0000011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.I_imm << 20);
-
+            (inst.rs1 << 15) | (inst.I_imm << 20);
+            
         }
         else if (ins == "lh")
         {
@@ -832,8 +832,8 @@ void parse (instWord& inst)
             inst.funct3 = 0b001;
             inst.opcode = 0b0000011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.I_imm << 20);
-
+            (inst.rs1 << 15) | (inst.I_imm << 20);
+            
         }
         else if (ins == "lhu")
         {
@@ -846,8 +846,8 @@ void parse (instWord& inst)
             inst.funct3 = 0b101;
             inst.opcode = 0b0000011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.I_imm << 20);
-
+            (inst.rs1 << 15) | (inst.I_imm << 20);
+            
         }
         else if (ins == "lw")
         {
@@ -860,7 +860,7 @@ void parse (instWord& inst)
             inst.funct3 = 0b010;
             inst.opcode = 0b0000011;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.I_imm << 20);
+            (inst.rs1 << 15) | (inst.I_imm << 20);
         }
         //S
         else if (ins == "sb")
@@ -874,7 +874,7 @@ void parse (instWord& inst)
             inst.funct3 = 0b000;
             inst.opcode = 0b0100011;
             inst.MachineCode = inst.opcode | ((inst.S_imm & 0b000000011111) << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.S_imm & 0b111111100000) << 20);
+            (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.S_imm & 0b111111100000) << 20);
         }
         else if (ins == "sh")
         {
@@ -887,7 +887,7 @@ void parse (instWord& inst)
             inst.funct3 = 0b001;
             inst.opcode = 0b0100011;
             inst.MachineCode = inst.opcode | ((inst.S_imm & 0b000000011111) << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.S_imm & 0b111111100000) << 20);
+            (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.S_imm & 0b111111100000) << 20);
         }
         else if (ins == "sw")
         {
@@ -900,7 +900,7 @@ void parse (instWord& inst)
             inst.funct3 = 0b010;
             inst.opcode = 0b0100011;
             inst.MachineCode = inst.opcode | ((inst.S_imm & 0b000000011111) << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.S_imm & 0b111111100000) << 20);
+            (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.S_imm & 0b111111100000) << 20);
         }
         //SB
         else if (ins == "beq")
@@ -915,7 +915,7 @@ void parse (instWord& inst)
             inst.funct3 = 0b000;
             inst.opcode = 0b1100011;
             inst.MachineCode = inst.opcode | ((inst.B_imm & 0b0100000000000) >> 4) | ((inst.B_imm & 0b0000000011110) << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.B_imm & 0b0011111100000) << 20) | ((inst.B_imm & 0b1000000000000) << 19);        }
+            (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.B_imm & 0b0011111100000) << 20) | ((inst.B_imm & 0b1000000000000) << 19);        }
         else if (ins == "bne")
         {
             regex ex(BRANCH);
@@ -928,7 +928,7 @@ void parse (instWord& inst)
             inst.funct3 = 0b001;
             inst.opcode = 0b1100011;
             inst.MachineCode = inst.opcode | ((inst.B_imm & 0b0100000000000) >> 4) | ((inst.B_imm & 0b0000000011110) << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.B_imm & 0b0011111100000) << 20) | ((inst.B_imm & 0b1000000000000) << 19);        }
+            (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.B_imm & 0b0011111100000) << 20) | ((inst.B_imm & 0b1000000000000) << 19);        }
         else if (ins == "blt")
         {
             regex ex(BRANCH);
@@ -941,7 +941,7 @@ void parse (instWord& inst)
             inst.funct3 = 0b100;
             inst.opcode = 0b1100011;
             inst.MachineCode = inst.opcode | ((inst.B_imm & 0b0100000000000) >> 4) | ((inst.B_imm & 0b0000000011110) << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.B_imm & 0b0011111100000) << 20) | ((inst.B_imm & 0b1000000000000) << 19);        }
+            (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.B_imm & 0b0011111100000) << 20) | ((inst.B_imm & 0b1000000000000) << 19);        }
         else if (ins == "bltu")
         {
             regex ex(BRANCH);
@@ -954,7 +954,7 @@ void parse (instWord& inst)
             inst.funct3 = 0b110;
             inst.opcode = 0b1100011;
             inst.MachineCode = inst.opcode | ((inst.B_imm & 0b0100000000000) >> 4) | ((inst.B_imm & 0b0000000011110) << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.B_imm & 0b0011111100000) << 20) | ((inst.B_imm & 0b1000000000000) << 19);        }
+            (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.B_imm & 0b0011111100000) << 20) | ((inst.B_imm & 0b1000000000000) << 19);        }
         else if (ins == "bge")
         {
             regex ex(BRANCH);
@@ -967,7 +967,7 @@ void parse (instWord& inst)
             inst.funct3 = 0b101;
             inst.opcode = 0b1100011;
             inst.MachineCode = inst.opcode | ((inst.B_imm & 0b0100000000000) >> 4) | ((inst.B_imm & 0b0000000011110) << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.B_imm & 0b0011111100000) << 20) | ((inst.B_imm & 0b1000000000000) << 19);        }
+            (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.B_imm & 0b0011111100000) << 20) | ((inst.B_imm & 0b1000000000000) << 19);        }
         else if (ins == "bgeu")
         {
             regex ex(BRANCH);
@@ -980,7 +980,7 @@ void parse (instWord& inst)
             inst.funct3 = 0b111;
             inst.opcode = 0b1100011;
             inst.MachineCode = inst.opcode | ((inst.B_imm & 0b0100000000000) >> 4) | ((inst.B_imm & 0b0000000011110) << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.B_imm & 0b0011111100000) << 20) | ((inst.B_imm & 0b1000000000000) << 19);        }
+            (inst.rs1 << 15) | (inst.rs2 << 20) | ((inst.B_imm & 0b0011111100000) << 20) | ((inst.B_imm & 0b1000000000000) << 19);        }
         //UJ
         else if (ins == "jal")
         {
@@ -992,9 +992,9 @@ void parse (instWord& inst)
             // inst.J_imm =
             inst.opcode = 0b1101111;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.J_imm & 0b011111111000000000000)
-                            | ((inst.J_imm & 0b000000000100000000000) << 9)
-                            | ((inst.J_imm & 0b000000000011111111110) << 20)
-                            | ((inst.J_imm & 0b100000000000000000000) << 11);
+            | ((inst.J_imm & 0b000000000100000000000) << 9)
+            | ((inst.J_imm & 0b000000000011111111110) << 20)
+            | ((inst.J_imm & 0b100000000000000000000) << 11);
         }
         //I
         else if (ins == "jalr")
@@ -1008,7 +1008,12 @@ void parse (instWord& inst)
             inst.funct3 = 0b000;
             inst.opcode = 0b1100111;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.funct3 << 12) |
-                               (inst.rs1 << 15) | (inst.I_imm << 20);
+            (inst.rs1 << 15) | (inst.I_imm << 20);
+        }
+        else if (ins == "ECALL")
+        {
+            inst.opcode =  0b1110011;
+            inst.MachineCode = inst.opcode;
         }
         else
         {
@@ -1023,3 +1028,4 @@ void parse (instWord& inst)
         cout << ins << endl;
     }
 }
+
