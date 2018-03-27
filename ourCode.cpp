@@ -61,7 +61,7 @@ int main()
     instWord W;
 
     outFile.open("output.txt", ios::app);
-    inFile.open("div.txt");
+    inFile.open("div.s");
     if(inFile.is_open())
     {
         int i = 0;
@@ -1164,7 +1164,7 @@ void parse (instWord& inst)
             inst.rs2    = (unsigned int)stoi(M[3]);
             inst.J_label  = M[4];
             int line = 0;
-            if(map.count(inst.J_label)) line = map.at(inst.J_LABEL);
+            if(map.count(inst.J_label)) line = map.at(inst.J_label);
             else{inst.known = false; return;}
             inst.B_imm = (unsigned int)(line - pc/4);
             inst.funct3 = 0b001;
@@ -1180,7 +1180,7 @@ void parse (instWord& inst)
             inst.rs2    = (unsigned int)stoi(M[3]);
             inst.J_label  = M[4];
             int line = 0;
-            if(map.count(inst.J_label)) line = map.at(inst.J_LABEL);
+            if(map.count(inst.J_label)) line = map.at(inst.J_label);
             else{inst.known = false; return;}
             inst.B_imm = (unsigned int)(line - pc/4);
             inst.funct3 = 0b100;
@@ -1196,7 +1196,7 @@ void parse (instWord& inst)
             inst.rs2    = (unsigned int)stoi(M[3]);
             inst.J_label  = M[4];
             int line = 0;
-            if(map.count(inst.J_label)) line = map.at(inst.J_LABEL);
+            if(map.count(inst.J_label)) line = map.at(inst.J_label);
             else{inst.known = false; return;}
             inst.B_imm = (unsigned int)(line - pc/4);
             inst.funct3 = 0b110;
@@ -1212,7 +1212,7 @@ void parse (instWord& inst)
             inst.rs2    = (unsigned int)stoi(M[3]);
             inst.J_label  = M[4];
             int line = 0;
-            if(map.count(inst.J_label)) line = map.at(inst.J_LABEL);
+            if(map.count(inst.J_label)) line = map.at(inst.J_label);
             else{inst.known = false; return;}
             inst.B_imm = (unsigned int)(line - pc/4);
             inst.funct3 = 0b101;
@@ -1228,7 +1228,7 @@ void parse (instWord& inst)
             inst.rs2    = (unsigned int)stoi(M[3]);
             inst.J_label  = M[4];
             int line = 0;
-            if(map.count(inst.J_label)) line = map.at(inst.J_LABEL);
+            if(map.count(inst.J_label)) line = map.at(inst.J_label);
             else{inst.known = false; return;}
             inst.B_imm = (unsigned int)(line - pc/4);
             inst.funct3 = 0b111;
@@ -1244,7 +1244,7 @@ void parse (instWord& inst)
             inst.rd    = (unsigned int)stoi(M[2]);
             inst.J_label  = M[3];
             int line = 0;
-            if(map.count(inst.J_label)) line = map.at(inst.J_LABEL);
+            if(map.count(inst.J_label)) line = map.at(inst.J_label);
             else{inst.known = false; return;}
             inst.B_imm = (unsigned int)(line - pc/4);
             inst.opcode = 0b1101111;
