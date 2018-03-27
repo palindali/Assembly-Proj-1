@@ -12,7 +12,7 @@ using namespace std;
 
 #define SPACE "\\s+"
 #define REG "\\s*x(\\d{1,2})"
-#define LABEL "(\\w+):?"
+#define LABEL "(\\w+:?)"
 #define JLABEL "^(\\w+):$"
 #define IMM "\\s*([-|+]?\\d+|0x\\d+)"
 #define NEG "^-"
@@ -522,9 +522,11 @@ void parse (instWord& inst)
     smatch m;
     regex_search(inst.Text, m, ex);
     string ins = m[1];
-    regex ex1(".+:");
 
-    if(!(regex_match(ins, ex1)))
+    regex jlbl(JLABEL);
+    // smatch labelm;
+
+    if(!(regex_match(ins, jlbl)))
     {
         //R
         if (ins == "add")
@@ -1140,7 +1142,10 @@ void parse (instWord& inst)
             inst.rs1    = (unsigned int)stoi(M[2]);
             inst.rs2    = (unsigned int)stoi(M[3]);
             inst.J_label  = M[4];
-            // inst.B_imm  = (unsigned int)stoi(M[4]);
+            int line = 0;
+            if(map.count(inst.J_label)) line = map.at(inst.J_LABEL);
+            else{inst.known = false; return;}
+            inst.B_imm = (unsigned int)(line - pc/4);
             inst.funct3 = 0b001;
             inst.opcode = 0b1100011;
             inst.MachineCode = inst.opcode | ((inst.B_imm & 0b0100000000000) >> 4) | ((inst.B_imm & 0b0000000011110) << 7) | (inst.funct3 << 12) |
@@ -1153,7 +1158,10 @@ void parse (instWord& inst)
             inst.rs1    = (unsigned int)stoi(M[2]);
             inst.rs2    = (unsigned int)stoi(M[3]);
             inst.J_label  = M[4];
-            // inst.B_imm  = (unsigned int)stoi(M[4]);
+            int line = 0;
+            if(map.count(inst.J_label)) line = map.at(inst.J_LABEL);
+            else{inst.known = false; return;}
+            inst.B_imm = (unsigned int)(line - pc/4);
             inst.funct3 = 0b100;
             inst.opcode = 0b1100011;
             inst.MachineCode = inst.opcode | ((inst.B_imm & 0b0100000000000) >> 4) | ((inst.B_imm & 0b0000000011110) << 7) | (inst.funct3 << 12) |
@@ -1166,7 +1174,10 @@ void parse (instWord& inst)
             inst.rs1    = (unsigned int)stoi(M[2]);
             inst.rs2    = (unsigned int)stoi(M[3]);
             inst.J_label  = M[4];
-            // inst.B_imm  = (unsigned int)stoi(M[4]);
+            int line = 0;
+            if(map.count(inst.J_label)) line = map.at(inst.J_LABEL);
+            else{inst.known = false; return;}
+            inst.B_imm = (unsigned int)(line - pc/4);
             inst.funct3 = 0b110;
             inst.opcode = 0b1100011;
             inst.MachineCode = inst.opcode | ((inst.B_imm & 0b0100000000000) >> 4) | ((inst.B_imm & 0b0000000011110) << 7) | (inst.funct3 << 12) |
@@ -1179,7 +1190,10 @@ void parse (instWord& inst)
             inst.rs1    = (unsigned int)stoi(M[2]);
             inst.rs2    = (unsigned int)stoi(M[3]);
             inst.J_label  = M[4];
-            // inst.B_imm  = (unsigned int)stoi(M[4]);
+            int line = 0;
+            if(map.count(inst.J_label)) line = map.at(inst.J_LABEL);
+            else{inst.known = false; return;}
+            inst.B_imm = (unsigned int)(line - pc/4);
             inst.funct3 = 0b101;
             inst.opcode = 0b1100011;
             inst.MachineCode = inst.opcode | ((inst.B_imm & 0b0100000000000) >> 4) | ((inst.B_imm & 0b0000000011110) << 7) | (inst.funct3 << 12) |
@@ -1192,7 +1206,10 @@ void parse (instWord& inst)
             inst.rs1    = (unsigned int)stoi(M[2]);
             inst.rs2    = (unsigned int)stoi(M[3]);
             inst.J_label  = M[4];
-            // inst.B_imm  = (unsigned int)stoi(M[4]);
+            int line = 0;
+            if(map.count(inst.J_label)) line = map.at(inst.J_LABEL);
+            else{inst.known = false; return;}
+            inst.B_imm = (unsigned int)(line - pc/4);
             inst.funct3 = 0b111;
             inst.opcode = 0b1100011;
             inst.MachineCode = inst.opcode | ((inst.B_imm & 0b0100000000000) >> 4) | ((inst.B_imm & 0b0000000011110) << 7) | (inst.funct3 << 12) |
@@ -1205,7 +1222,10 @@ void parse (instWord& inst)
             regex_search(inst.Text, M, ex);
             inst.rd    = (unsigned int)stoi(M[2]);
             inst.J_label  = M[3];
-            // inst.J_imm =
+            int line = 0;
+            if(map.count(inst.J_label)) line = map.at(inst.J_LABEL);
+            else{inst.known = false; return;}
+            inst.B_imm = (unsigned int)(line - pc/4);
             inst.opcode = 0b1101111;
             inst.MachineCode = inst.opcode | (inst.rd << 7) | (inst.J_imm & 0b011111111000000000000)
             | ((inst.J_imm & 0b000000000100000000000) << 9)
@@ -1252,6 +1272,8 @@ void parse (instWord& inst)
     {
         // LABEL CODE
         inst.islabel = true;
-        cout << ins << endl;
+        inst.known = false;
+        return;
+        // cout << ins << endl;
     }
 }
